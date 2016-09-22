@@ -1,0 +1,215 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: Uber API
+  description: Move your app forward with the Uber API
+  version: "0.0.1"
+# the domain of the service
+host: api.es.com
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+basePath: /v1
+produces:
+  - application/json
+paths:
+  /payments:
+    get:
+      summary: Get payments per user.
+      description: |
+        This payments endpoint method returns all payments that a user defined by a uuid has associated to him, either present or
+      parameters:
+        - name: uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+      tags:
+        - Payments
+      responses:
+        200:
+          description: A json array with all of the user payments
+        default:
+          description: Unexpected error
+  
+    post:
+      summary: Create a new payment for an user
+      description: |
+        This payments endpoint method is used to create a new payment to the user specified by the uuid. This endpoint receive also the type of payment.
+        
+      parameters:
+        - name: uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+        - name: type_of_payment
+          description: Type of payment
+          required: true
+          type: string
+          in: header
+        - name: amount
+          description: The amount of money to pay
+          required: true
+          type: double
+          in: header
+        - name: description
+          description: Description of the product
+          required: true
+          type: string
+          in: header
+        - name: currency
+          description: Currency of money
+          required: true
+          type: string
+          in: header
+        - name: tax
+          description: Tax to pay
+          required: true
+          type: double
+          in: header
+        - name: shipping_tax
+          description: Shipping value
+          required: true
+          type: double
+          in: header
+        
+      tags:
+        - Payments
+      responses:
+        200:
+          description: Returns the paymentID
+        401:
+          description: Client uuid is not authorized
+        402:
+          description: Client doesn't have the tokens to perform the payment
+        default:
+          description: Unexpected error
+    
+  /payments/{paymentID}:      
+    get:
+      summary: Get all the information about a payment of an user
+      description: |
+        This payments endpoint method is used to obtain all the information about a payment of an user.
+        
+      parameters:
+        - name: paymentID
+          description: The paymentID that the user wants to check
+          required: true
+          type: string
+          in: path
+        - name: uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+      tags:
+        - Payments
+      responses:
+        200:
+          description: A json array with all of the user payments
+        401:
+          description: Client uuid is not authorized
+        403:
+          description: Payment information is not valid for the given user
+        default:
+          description: Unexpected error
+  
+    post:
+      summary: Ends the credit card payment
+      description: |
+        This payments endpoint method is used to finish the payment with credit card
+        
+      parameters:
+        - name: uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+        - name: paymentID
+          description: The payment uuid
+          required: true
+          type: string
+          in: path
+        - name: number
+          description: The credit card number
+          required: true
+          type: string
+          in: header
+        - name: type
+          description: Type of credit card
+          required: true
+          type: string
+          in: header
+        - name: expire_month
+          description: Expire month
+          required: true
+          type: integer
+          in: header
+        - name: expire_year
+          description: Expire year
+          required: true
+          type: integer
+          in: header
+        - name: cvv2
+          description: CVV of credit card
+          required: true
+          type: integer
+          in: header
+        - name: first_name
+          description: First Name in credit card
+          required: true
+          type: string
+          in: header
+        - name: last_name
+          description: Last Name in credit card
+          required: true
+          type: string
+          in: header
+        
+      tags:
+        - Payments
+      responses:
+        200:
+          description: Purchase was successfully created
+        401:
+          description: Client uuid is not authorized
+        402:
+          description: Client doesn't have the tokens to perform the payment
+        default:
+          description: Unexpected error
+  
+  /payments/types:
+    get:
+      summary: Get types of payment available
+      description: |
+        This types of payment endpoint method returns a list with all types of payment available.
+      tags:
+        - Types of payment
+      responses:
+        200:
+          description: A json array with all of the types of payment
+        default:
+          description: Unexpected error
+  
+definitions:
+  Payments:
+    type: object
+    properties:
+      payment_uuid:
+        type: string
+        description: Unique identifier
+      
+ 
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
