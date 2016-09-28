@@ -2,8 +2,8 @@
 # as a demonstration of an API spec in YAML
 swagger: '2.0'
 info:
-  title: Uber API
-  description: Move your app forward with the Uber API
+  title: Payments Manager
+  description: Transafe payments manager service API
   version: "0.0.1"
 # the domain of the service
 host: api.es.com
@@ -15,11 +15,54 @@ basePath: /v1
 produces:
   - application/json
 paths:
+  /payments_interface:
+    get:
+      summary: Get HTML page to confirm payment.
+      description: |
+        This payments endpoint method returns all the information about a payment that a user defined by a uuid has associated to him
+      parameters:
+        - name: buyer_uuid
+          description: The buyer uuid
+          required: true
+          type: string
+          in: header
+        - name: seller_uuid
+          description: The seller uuid
+          required: true
+          type: string
+          in: header
+        - name: buyer_name
+          description: The buyer name
+          required: true
+          type: string
+          in: header
+        - name: seller_name
+          description: The seller name
+          required: true
+          type: string
+          in: header
+        - name: amount
+          description: The amount of money to pay
+          required: true
+          type: number
+          in: header
+        - name: description
+          description: Description of the product
+          required: true
+          type: string
+          in: header
+      tags:
+        - Payments
+      responses:
+        200:
+          description: Retunrs an html page.
+        default:
+          description: Unexpected Error.
   /payments:
     get:
       summary: Get payments per user.
       description: |
-        This payments endpoint method returns all payments that a user defined by a uuid has associated to him, either present or
+        This payments endpoint method returns all payments that a user defined by a uuid has associated to him
       parameters:
         - name: uuid
           description: The user uuid
@@ -37,71 +80,56 @@ paths:
     post:
       summary: Create a new payment for an user
       description: |
-        This payments endpoint method is used to create a new payment to the user specified by the uuid. This endpoint receive also the type of payment.
-        
+        This payments endpoint method is used to create a new payment to the user specified by the uuid.
       parameters:
-        - name: uuid
-          description: The user uuid
+        - name: buyer_uuid
+          description: The buyer uuid
           required: true
           type: string
           in: header
-        - name: type_of_payment
-          description: Type of payment
+        - name: seller_uuid
+          description: The seller uuid
+          required: true
+          type: string
+          in: header
+        - name: transaction_id
+          description: Transaction id
           required: true
           type: string
           in: header
         - name: amount
           description: The amount of money to pay
           required: true
-          type: double
+          type: number
           in: header
         - name: description
           description: Description of the product
           required: true
           type: string
           in: header
-        - name: currency
-          description: Currency of money
-          required: true
-          type: string
-          in: header
-        - name: tax
-          description: Tax to pay
-          required: true
-          type: double
-          in: header
-        - name: shipping_tax
-          description: Shipping value
-          required: true
-          type: double
-          in: header
-        
       tags:
         - Payments
       responses:
         200:
           description: Returns the paymentID
         401:
-          description: Client uuid is not authorized
-        402:
-          description: Client doesn't have the tokens to perform the payment
+          description: Client doesn't have enough money to pay.
         default:
           description: Unexpected error
     
-  /payments/{paymentID}:      
+  /payments/{paymentID}:
     get:
-      summary: Get all the information about a payment of an user
+      summary: Get payment by ID.
       description: |
-        This payments endpoint method is used to obtain all the information about a payment of an user.
-        
+        This payments endpoint method returns all the information about a payment
       parameters:
         - name: paymentID
-          description: The paymentID that the user wants to check
+          description: The payment id
           required: true
           type: string
           in: path
-        - name: uuid
-          description: The user uuid
+        - name: user_uuid
+          description: Uuid of the logged user
           required: true
           type: string
           in: header
@@ -109,37 +137,107 @@ paths:
         - Payments
       responses:
         200:
-          description: A json array with all of the user payments
+          description: A json array with the information of a payment
         401:
-          description: Client uuid is not authorized
-        403:
-          description: Payment information is not valid for the given user
+          description: The payment ID doesn't correspond to user's uuid.
         default:
           description: Unexpected error
-  
-    post:
-      summary: Ends the credit card payment
+          
+    put:
+      summary: Update payment state.
       description: |
-        This payments endpoint method is used to finish the payment with credit card
-        
+        This payments endpoint method updates all the information about a payment
+      parameters:
+        - name: paymentID
+          description: The payment id
+          required: true
+          type: string
+          in: path
+        - name: user_uuid
+          description: Uuid of the logged user
+          required: true
+          type: string
+          in: header
+      tags:
+        - Payments
+      responses:
+        200:
+          description: Payment state have been updated successfully.
+        401:
+          description: The payment ID doesn't correspond to user's uuid.
+        default:
+          description: Unexpected error
+          
+  /sells:
+    get:
+      summary: Get sells per user.
+      description: |
+        This sells endpoint method returns all sells that a user defined by a uuid has associated to him, either present or
       parameters:
         - name: uuid
           description: The user uuid
           required: true
           type: string
           in: header
-        - name: paymentID
-          description: The payment uuid
-          required: true
-          type: string
-          in: path
-        - name: number
-          description: The credit card number
+      tags:
+        - Sells
+      responses:
+        200:
+          description: A json array with all of the user sells
+        default:
+          description: Unexpected error
+  
+  /cards_interface:
+    get:
+      summary: Get HTML page to add a new card
+      description: |
+        This cards endpoint method returns an HTML page that a user defined by a uuid has associated to him can associate a credit card
+      parameters:
+        - name: uuid
+          description: The user uuid
           required: true
           type: string
           in: header
-        - name: type
-          description: Type of credit card
+      tags:
+        - Cards
+      responses:
+        200:
+          description: An HTML page is returned.
+        default:
+          description: Unexpected error
+  /cards:
+    get:
+      summary: Get cards per user
+      description: |
+        This cards endpoint method returns all cards that a user defined by a uuid has associated to him
+      parameters:
+        - name: user_uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+      tags:
+        - Cards
+      responses:
+        200:
+          description: A json array with all of the user cards
+        401:
+          description: The user doens't have any card associated to him
+        default:
+          description: Unexpected error
+          
+    post:
+      summary: Associate a card to an user
+      description: |
+        This cards endpoint method associates a cards to an user defined by a uuid that has associated to him
+      parameters:
+        - name: user_uuid
+          description: The user uiid
+          required: true
+          type: string
+          in: header
+        - name: number
+          description: The credit card number
           required: true
           type: string
           in: header
@@ -168,48 +266,82 @@ paths:
           required: true
           type: string
           in: header
-        
       tags:
-        - Payments
+        - Cards
       responses:
         200:
-          description: Purchase was successfully created
+          description: The card has been associated successfully.
+        default:
+          description: Unexpected error
+    
+    delete:
+      summary: Remove a card
+      description:  |
+          This cards endpoint method removes a cards of an user defined by a uuid that has associated to him
+      parameters:
+        - name: user_uuid
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+      tags:
+        - Cards
+      responses:
+        200:
+          description: The card has been removed successfully.
         401:
-          description: Client uuid is not authorized
-        402:
-          description: Client doesn't have the tokens to perform the payment
+          description: The user doesn't have any card associated to him.
         default:
           description: Unexpected error
-  
-  /payments/types:
-    get:
-      summary: Get types of payment available
-      description: |
-        This types of payment endpoint method returns a list with all types of payment available.
+          
+    put:
+      summary: Update a card
+      description:  |
+          This cards endpoint method updates a cards of an user defined by a uuid that has associated to him
+      parameters:
+        - name: user_uuid
+          description: The user uiid
+          required: true
+          type: string
+          in: header
+        - name: number
+          description: The credit card number
+          required: true
+          type: string
+          in: header
+        - name: expire_month
+          description: Expire month
+          required: true
+          type: integer
+          in: header
+        - name: expire_year
+          description: Expire year
+          required: true
+          type: integer
+          in: header
+        - name: cvv2
+          description: CVV of credit card
+          required: true
+          type: integer
+          in: header
+        - name: first_name
+          description: First Name in credit card
+          required: true
+          type: string
+          in: header
+        - name: last_name
+          description: Last Name in credit card
+          required: true
+          type: string
+          in: header
       tags:
-        - Types of payment
+        - Cards
       responses:
         200:
-          description: A json array with all of the types of payment
+          description: The card has been updated successfully.
+        401:
+          description: The user doesn't have any card associated to him.
         default:
           description: Unexpected error
+          
   
-definitions:
-  Payments:
-    type: object
-    properties:
-      payment_uuid:
-        type: string
-        description: Unique identifier
-      
- 
-  Error:
-    type: object
-    properties:
-      code:
-        type: integer
-        format: int32
-      message:
-        type: string
-      fields:
-        type: string
