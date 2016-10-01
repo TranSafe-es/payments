@@ -64,13 +64,13 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
                 serializer.fields[f].required = True
         if serializer.is_valid():
             if Card.objects.filter(user_id=serializer.validated_data["user_id"],
-                                   card_id=serializer.validated_data["card_id"]).count() is 0:
+                                   card_id=request.data["card_id"]).count() is 0:
                 return Response({'status': 'Doesn\'t have associated',
                                  'message': 'The user doesn\'t have this card associated to him.'},
                                 status=status.HTTP_401_UNAUTHORIZED)
             else:
                 c = Card.objects.get(user_id=serializer.validated_data["user_id"],
-                                     card_id=serializer.validated_data["card_id"])
+                                     card_id=request.data["card_id"])
 
                 try:
                     c.number = serializer.validated_data["number"]
@@ -109,17 +109,19 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
 
     def destroy(self, request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
-
+        for f in serializer.fields:
+            if f == "card_id":
+                serializer.fields[f].required = True
         if serializer.is_valid():
             if Card.objects.filter(user_id=serializer.validated_data["user_id"],
-                                   card_id=serializer.validated_data["card_id"]).count() is 0:
+                                   card_id=request.data["card_id"]).count() is 0:
                 return Response({'status': 'Doesn\'t have associated',
                                  'message': 'The user doesn\'t have this card associated to him.'},
                                 status=status.HTTP_401_UNAUTHORIZED)
 
             else:
                 c = Card.objects.get(user_id=serializer.validated_data["user_id"],
-                                     card_id=serializer.validated_data["card_id"])
+                                     card_id=request.data["card_id"])
                 c.delete()
 
                 return Response({'status': 'Deleted',
