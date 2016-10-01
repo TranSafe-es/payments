@@ -158,6 +158,11 @@ paths:
           required: true
           type: string
           in: header
+        - name: operation
+          description: Operation to be done, finish the payment or refund the buyer
+          required: true
+          type: string
+          in: header
       tags:
         - Payments
       responses:
