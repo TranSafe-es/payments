@@ -27,7 +27,7 @@ class CardsTestCase(TestCase):
         response = client.post(path=url, data=data)
         self.assertEqual(response.status_code, 401)
 
-        data = {'user_id': user_id, 'card_id': card_id1, 'expire_month': '10', 'expire_year': '2015'}
+        data = {'user_id': user_id, 'card_id': card_id1, 'expire_month': '10', 'expire_year': '2019'}
 
         response = client.put(path=url, data=data)
         self.assertEqual(response.status_code, 200)
