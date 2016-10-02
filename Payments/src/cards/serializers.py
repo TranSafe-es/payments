@@ -26,9 +26,14 @@ class DeleteCardSerializer(serializers.ModelSerializer):
         read_only_fields = ('card_id', )
 
 
-
 class ListCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
         fields = ('user_id',)
+
+
+class MyCardsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = ('number', 'expire_month', 'expire_year')
 
