@@ -159,7 +159,7 @@ paths:
           type: string
           in: header
         - name: operation
-          description: Operation to be done, finish the payment or refund the buyer
+          description: Operation to be done, finish the payment or refund the buyer. The state can be Pending, Finished or Refunded.
           required: true
           type: string
           in: header
@@ -276,16 +276,25 @@ paths:
       responses:
         200:
           description: The card has been associated successfully.
+        401:
+          description: The card already exists.
+        403:
+          description: The card expired.
         default:
           description: Unexpected error
     
     delete:
-      summary: Remove a card
+      summary: Delete a card
       description:  |
-          This cards endpoint method removes a cards of an user defined by a uuid that has associated to him
+          This cards endpoint method deletes a cards of an user defined by a uuid that has associated to him
       parameters:
         - name: user_uuid
           description: The user uuid
+          required: true
+          type: string
+          in: header
+        - name: card_id
+          description: The card uuid
           required: true
           type: string
           in: header
@@ -293,9 +302,9 @@ paths:
         - Cards
       responses:
         200:
-          description: The card has been removed successfully.
+          description: The card has been deleted successfully.
         401:
-          description: The user doesn't have any card associated to him.
+          description: The user doesn't have this card associated to him.
         default:
           description: Unexpected error
           
@@ -309,34 +318,39 @@ paths:
           required: true
           type: string
           in: header
+        - name: card_id
+          description: The card uuid
+          required: true
+          type: string
+          in: header
         - name: number
           description: The credit card number
-          required: true
+          required: false
           type: string
           in: header
         - name: expire_month
           description: Expire month
-          required: true
+          required: false
           type: integer
           in: header
         - name: expire_year
           description: Expire year
-          required: true
+          required: false
           type: integer
           in: header
         - name: cvv2
           description: CVV of credit card
-          required: true
+          required: false
           type: integer
           in: header
         - name: first_name
           description: First Name in credit card
-          required: true
+          required: false
           type: string
           in: header
         - name: last_name
           description: Last Name in credit card
-          required: true
+          required: false
           type: string
           in: header
       tags:
@@ -345,7 +359,7 @@ paths:
         200:
           description: The card has been updated successfully.
         401:
-          description: The user doesn't have any card associated to him.
+          description: The user doesn't have this card associated to him.
         default:
           description: Unexpected error
           

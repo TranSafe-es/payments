@@ -1,46 +1,104 @@
-import status as status
-from django.shortcuts import render
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .models import Card
-from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, ListCardSerializer, \
-    MyCardsSerializer
+from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, MyCardsSerializer, \
+    ListCardsSerializer
 from rest_framework import viewsets, status, mixins, views
-from django.db import transaction
-from django.db import IntegrityError
 import uuid
 import datetime
+from django.core.cache import cache
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
+
+
+class AddCardView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+    def retrieve(self, request, *args, **kwargs):
+        cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
+        cache.set(cache_id, kwargs["user_id"])
+
+        data = {'url': '192.168.33.10/add_card/' + cache_id}
+        return Response(data=data,
+                        status=status.HTTP_302_FOUND)
+
+
+class UpdateCardView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+    def retrieve(self, request, *args, **kwargs):
+        cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
+        cache.set(cache_id, kwargs["user_id"])
+
+        data = {'url': '192.168.33.10/update_card/' + cache_id}
+        return Response(data=data,
+                        status=status.HTTP_302_FOUND)
+
+
+class DeleteCardView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+    def retrieve(self, request, *args, **kwargs):
+        cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
+        cache.set(cache_id, kwargs["user_id"])
+
+        data = {'url': '192.168.33.10/delete_card/' + cache_id}
+        return Response(data=data,
+                        status=status.HTTP_302_FOUND)
 
 
 class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-                   mixins.ListModelMixin, viewsets.GenericViewSet):
+                   mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
-    def list(self, request, *args, **kwargs):
-        serializer = ListCardSerializer(data=request.query_params)
+    def retrieve(self, request, *args, **kwargs):
 
-        if serializer.is_valid():
-            cards = []
-            for c in Card.objects.all():
-                if c.user_id == serializer.validated_data["user_id"]:
-                    card_data = {'number': "************" + c.number[-4:], 'expire_month': c.expire_month,
-                                 'expire_year': c.expire_year}
-                    cards.append(card_data)
-            card_serializer = MyCardsSerializer(cards, many=True)
+        if Card.objects.filter(card_id=kwargs["card_id"]).count() == 0:
+            return Response({'status': 'Nonexistent card',
+                             'message': 'The card doesn\'t exists'},
+                            status=status.HTTP_404_NOT_FOUND)
+        elif Card.objects.filter(card_id=kwargs["card_id"]).count() == 1:
+            c = Card.objects.get(card_id=kwargs["card_id"])
+
+            card = {'number': "************" + c.number[-4:], 'expire_month': c.expire_month,
+                    'expire_year': c.expire_year}
+
+            card_serializer = MyCardsSerializer(card)
 
             return Response(card_serializer.data,
                             status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'Bad Request',
+                             'message': 'Unexpected error'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request, *args, **kwargs):
+        serializer = ListCardsSerializer(data=request.query_params)
+
+        if serializer.is_valid():
+            user_id = cache.get(serializer.validated_data["cache_id"])
+
+            if Card.objects.filter(user_id=user_id).count() != 0:
+                cards = []
+                for c in Card.objects.all():
+                    if c.user_id == user_id:
+                        card_data = {'number': "************" + c.number[-4:], 'expire_month': c.expire_month,
+                                     'expire_year': c.expire_year}
+                        cards.append(card_data)
+                card_serializer = MyCardsSerializer(cards, many=True)
+
+                return Response(card_serializer.data,
+                                status=status.HTTP_200_OK)
 
         return Response({'status': 'Bad Request',
                          'message': 'Unexpected error'},
-                        status=status.HTTP_400_BAD_REQUEST
-                        )
+                        status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, **kwargs):
         serializer = CardSerializer(data=request.data)
 
         if serializer.is_valid():
-            if Card.objects.filter(user_id=serializer.validated_data["user_id"], number=serializer.validated_data["number"],
+            user_id = cache.get(serializer.validated_data["cache_id"])
+
+            if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"],
                                    cvv2=serializer.validated_data["cvv2"]).count() is 1:
+                cache.set('user_id', 'ola')
+
                 return Response({'status': 'Already Exists',
                                  'message': 'The card already exists.'},
                                 status=status.HTTP_401_UNAUTHORIZED
@@ -59,6 +117,7 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
                                 return Response({'status': 'Expiration Date',
                                                  'message': 'The card expired.'},
                                                 status=status.HTTP_403_FORBIDDEN)
+
                         Card.objects.create(user_id=serializer.validated_data["user_id"],
                                             card_id=uuid.uuid4(),
                                             number=serializer.validated_data["number"],
@@ -82,21 +141,21 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
     def update(self, request, **kwargs):
         serializer = UpdateCardSerializer(data=request.data)
         for f in serializer.fields:
-            if f != "card_id" and f != "user_id":
+            if f != "cache_id":
                 serializer.fields[f].required = False
-            elif f == "card_id":
-                serializer.fields[f].required = True
         if serializer.is_valid():
+            user_id = cache.get(serializer.validated_data["cache_id"])
+
             now = datetime.datetime.now()
 
-            if Card.objects.filter(user_id=serializer.validated_data["user_id"],
-                                   card_id=request.data["card_id"]).count() is 0:
+            if Card.objects.filter(user_id=user_id,
+                                   card_id=kwargs["card_id"]).count() is 0:
                 return Response({'status': 'Doesn\'t have associated',
                                  'message': 'The user doesn\'t have this card associated to him.'},
                                 status=status.HTTP_401_UNAUTHORIZED)
             else:
-                c = Card.objects.get(user_id=serializer.validated_data["user_id"],
-                                     card_id=request.data["card_id"])
+                c = Card.objects.get(user_id=user_id,
+                                     card_id=kwargs["card_id"])
 
                 try:
                     if len(serializer.validated_data["number"]) == 16:
@@ -161,19 +220,19 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
 
     def destroy(self, request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
-        for f in serializer.fields:
-            if f == "card_id":
-                serializer.fields[f].required = True
+
         if serializer.is_valid():
-            if Card.objects.filter(user_id=serializer.validated_data["user_id"],
-                                   card_id=request.data["card_id"]).count() is 0:
+            user_id = cache.get(serializer.validated_data["cache_id"])
+
+            if Card.objects.filter(user_id=user_id,
+                                   card_id=kwargs["card_id"]).count() is 0:
                 return Response({'status': 'Doesn\'t have associated',
                                  'message': 'The user doesn\'t have this card associated to him.'},
                                 status=status.HTTP_401_UNAUTHORIZED)
 
             else:
-                c = Card.objects.get(user_id=serializer.validated_data["user_id"],
-                                     card_id=request.data["card_id"])
+                c = Card.objects.get(user_id=user_id,
+                                     card_id=kwargs["card_id"])
                 c.delete()
 
                 return Response({'status': 'Deleted',
