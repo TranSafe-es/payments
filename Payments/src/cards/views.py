@@ -77,8 +77,8 @@ class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.Dest
                 cards = []
                 for c in Card.objects.all():
                     if c.user_id == user_id:
-                        card_data = {'number': "************" + c.number[-4:], 'expire_month': c.expire_month,
-                                     'expire_year': c.expire_year}
+                        card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:],
+                                     'expire_month': c.expire_month, 'expire_year': c.expire_year}
                         cards.append(card_data)
                 card_serializer = MyCardsSerializer(cards, many=True)
 

@@ -34,7 +34,7 @@ class DeleteCardSerializer(serializers.ModelSerializer):
 class MyCardsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
-        fields = ('number', 'expire_month', 'expire_year')
+        fields = ('card_id', 'number', 'expire_month', 'expire_year')
 
 
 class ListCardsSerializer(serializers.ModelSerializer):
