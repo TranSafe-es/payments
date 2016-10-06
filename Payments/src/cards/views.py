@@ -19,37 +19,41 @@ from django.utils.cache import add_never_cache_headers
 class InitAddView(views.APIView):
 
     @staticmethod
-    def get(request, *args, **kwargs):
+    def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
+        #serializer = UserIDSerializer(data=kwargs)
 
-        serializer = UserIDSerializer(data=kwargs)
+        serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            data = {"user_id": kwargs["user_id"], "url": request.META.get("HTTP_REFERER")}
+            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            #data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+
             cache.set(cache_id, data)
 
             return redirect('/api/v1/cards/add_card/' + cache_id + "/")
         else:
-            return Response({'status': 'Bad Request',
-                             'message': 'Unexpected error'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        #data = {'url': '192.168.33.10/add_card/' + cache_id}
-        #return Response(data=data,
-                        #status=status.HTTP_302_FOUND)
+            response = Response({'status': 'Bad Request',
+                                 'message': 'Unexpected error'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            return redirect(request.META.get("HTTP_REFERER"), response)
 
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
     def retrieve(self, request, *args, **kwargs):
         template = "add_Card.html"
-        request.session = {}
+        for key in request.session.keys():
+            del request.session[key]
 
+        request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
         return render(request, template)
 
     def create(self, request, **kwargs):
         serializer = CardSerializer(data=request.data)
         for key in request.session.keys():
             del request.session[key]
+        request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
+
         if serializer.is_valid():
             user_id = cache.get(serializer.validated_data["cache_id"])["user_id"]
 
@@ -99,7 +103,10 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                                     first_name=serializer.validated_data["first_name"],
                                     last_name=serializer.validated_data["last_name"])
 
-                return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
+                response = Response({'status': 'Associated',
+                                     'message': 'The card has been associated successfully.'},
+                                    status=status.HTTP_200_OK)
+                return redirect(cache.get(serializer.validated_data["cache_id"])["url"], response)
 
         for error in serializer.errors:
             s = error + "_error"
@@ -109,11 +116,6 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
             request.session[data] = str(request.data[data])
         template = "add_Card.html"
         return render(request, template)
-            #Response({'status': 'Bad Request',
-             #            'message': 'Unexpected error',
-              #           'errors': serializer.errors},
-               #         status=status.HTTP_400_BAD_REQUEST
-                #        )
 
 
 class UpdateCardView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
