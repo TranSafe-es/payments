@@ -43,3 +43,9 @@ class ListCardsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
         fields = ('cache_id',)
+
+
+class UserIDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = ('user_id',)
