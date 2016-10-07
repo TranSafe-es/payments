@@ -2,7 +2,6 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from .models import Card
 import uuid
-import json
 
 user_id = str(uuid.uuid4())
 card_id1 = str(uuid.uuid4())
@@ -19,13 +18,10 @@ class CardsTestCase(TestCase):
     def test_cards(self):
         client = APIClient()
 
-        url = "/api/v1/cards/create/aaa/"
-        response = client.get(path=url)
-
-        url = "/api/v1/cards/"
+        url = "/api/v1/cards/create/"
 
         data = {}
-        response = client.get(path=url, data=data)
+        response = client.post(path=url)
         self.assertEqual(response.status_code, 400)
 
         data = {'user_id': user_id, 'number': '1234567890123456', 'expire_month': '9', 'expire_year': '2017',

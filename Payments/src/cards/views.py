@@ -1,4 +1,3 @@
-from rest_framework.response import Response
 from django.shortcuts import render, redirect
 from .models import Card
 from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, UserIDSerializer
@@ -7,6 +6,7 @@ import uuid
 import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
+from django.http import HttpResponse
 
 
 class InitAddView(views.APIView):
@@ -23,13 +23,13 @@ class InitAddView(views.APIView):
             #data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
-
+            for key in request.session.keys():
+                del request.session[key]
             return redirect('/api/v1/cards/add_card/' + cache_id + "/")
         else:
-            response = Response({'status': 'Bad Request',
+            return HttpResponse({'status': 'Bad Request',
                                  'message': 'Unexpected error'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            return redirect(request.META.get("HTTP_REFERER"), response)
 
 
 class InitUpdateView(views.APIView):
@@ -46,13 +46,36 @@ class InitUpdateView(views.APIView):
             #  data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
-
+            for key in request.session.keys():
+                del request.session[key]
             return redirect('/api/v1/cards/edit_card/' + cache_id + "/")
         else:
-            response = Response({'status': 'Bad Request',
+            return HttpResponse({'status': 'Bad Request',
                                  'message': 'Unexpected error'},
                                 status=status.HTTP_400_BAD_REQUEST)
-            return redirect(request.META.get("HTTP_REFERER"), response)
+
+
+class InitDeleteView(views.APIView):
+    @staticmethod
+    def get(request, *args, **kwargs):
+
+        cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
+        serializer = UserIDSerializer(data=kwargs)
+
+        #serializer = UserIDSerializer(data=request.data)
+        if serializer.is_valid():
+            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+
+            cache.set(cache_id, data)
+            for key in request.session.keys():
+                del request.session[key]
+
+            return redirect('/api/v1/cards/delete_card/' + cache_id + "/")
+        else:
+            return HttpResponse({'status': 'Bad Request',
+                                 'message': 'Unexpected error'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
@@ -118,10 +141,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                                         first_name=serializer.validated_data["first_name"],
                                         last_name=serializer.validated_data["last_name"])
 
-                    response = Response({'status': 'Associated',
-                                         'message': 'The card has been associated successfully.'},
-                                        status=status.HTTP_200_OK)
-                    return redirect(cache.get(serializer.validated_data["cache_id"])["url"], response)
+                    return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
 
             for error in serializer.errors:
                 s = error + "_error"
@@ -254,6 +274,7 @@ class UpdateCard(views.APIView):
                             c.save()
                             for key in request.session.keys():
                                 del request.session[key]
+
                             return redirect('/api/v1/cards/edit_card/' + serializer.validated_data["cache_id"] + "/")
 
                 for error in serializer.errors:
@@ -265,41 +286,56 @@ class UpdateCard(views.APIView):
             template = "update_Card.html"
             return render(request, template)
 
-class DeleteCardView(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
-    def retrieve(self, request, *args, **kwargs):
-        cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        cache.set(cache_id, kwargs["user_id"])
+class DeleteCardView(views.APIView):
+    @staticmethod
+    @never_cache
+    def get(request, *args, **kwargs):
+        template = "delete_Card.html"
+        for key in request.session.keys():
+            if key != "delete_error":
+                del request.session[key]
 
-        data = {'url': '192.168.33.10/delete_card/' + cache_id}
-        return Response(data=data,
-                        status=status.HTTP_302_FOUND)
+        user_id = cache.get(kwargs["cache_id"])["user_id"]
+
+        cards = []
+        for c in Card.objects.all():
+            if c.user_id == user_id:
+                card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:]}
+                cards.append(card_data)
+
+        request.session["card"] = []
+        for c in cards:
+            request.session["card"].append({'card_id': c["card_id"], 'number': c["number"]})
+
+        request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
+        return render(request, template)
 
 
-class CardsViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-                   mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-
-    def destroy(self, request, *args, **kwargs):
+class DeleteCard(views.APIView):
+    @staticmethod
+    def post(request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
+        if cache.get(request.data["cache_id"]) is not None:
+            request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
 
-        if serializer.is_valid():
-            user_id = cache.get(serializer.validated_data["cache_id"])
+            if serializer.is_valid():
+                user_id = cache.get(serializer.validated_data["cache_id"])["user_id"]
 
-            if Card.objects.filter(user_id=user_id,
-                                   card_id=kwargs["card_id"]).count() is 0:
-                return Response({'status': 'Doesn\'t have associated',
-                                 'message': 'The user doesn\'t have this card associated to him.'},
-                                status=status.HTTP_401_UNAUTHORIZED)
+                if Card.objects.filter(user_id=user_id,
+                                       card_id=kwargs["card_id"]).count() is 0:
 
-            else:
-                c = Card.objects.get(user_id=user_id,
-                                     card_id=kwargs["card_id"])
-                c.delete()
+                    request.session["delete_error"] = "The user doesn\'t have this card associated to him."
+                    return redirect('/api/v1/cards/delete_card/' + serializer.validated_data["cache_id"] + "/")
+                else:
+                    c = Card.objects.get(user_id=user_id,
+                                         card_id=kwargs["card_id"])
+                    c.delete()
+                    for key in request.session.keys():
+                        del request.session[key]
 
-                return Response({'status': 'Deleted',
-                                 'message': 'The card has been deleted successfully.'},
-                                status=status.HTTP_200_OK)
-        return Response({'status': 'Bad Request',
-                         'message': 'Unexpected error'},
-                        status=status.HTTP_400_BAD_REQUEST
-                        )
+                    return redirect('/api/v1/cards/delete_card/' + serializer.validated_data["cache_id"] + "/")
+
+            request.session["delete_error"] = "Unexpected Error."
+            template = "delete_Card.html"
+            return render(request, template)
