@@ -6,38 +6,38 @@ info:
   description: Transafe payments manager service API
   version: "0.0.1"
 # the domain of the service
-host: api.es.com
+host: 192.168.33.10
 # array of all schemes that your API supports
 schemes:
   - https
 # will be prefixed to all paths
-basePath: /v1
+basePath: /api/v1
 produces:
   - application/json
 paths:
-  /payments_interface:
+  /payments_create_interface:
     get:
       summary: Get HTML page to confirm payment.
       description: |
         This payments endpoint method returns all the information about a payment that a user defined by a uuid has associated to him
       parameters:
-        - name: buyer_uuid
-          description: The buyer uuid
+        - name: uuid1
+          description: The uuid of user1
           required: true
           type: string
           in: header
-        - name: seller_uuid
-          description: The seller uuid
+        - name: uuid2
+          description: The uuid of user2
           required: true
           type: string
           in: header
-        - name: buyer_name
-          description: The buyer name
+        - name: user1_name
+          description: The user1 name
           required: true
           type: string
           in: header
-        - name: seller_name
-          description: The seller name
+        - name: user2_name
+          description: The user2 name
           required: true
           type: string
           in: header
@@ -47,7 +47,7 @@ paths:
           type: number
           in: header
         - name: description
-          description: Description of the product
+          description: Description of the transaction
           required: true
           type: string
           in: header
@@ -192,175 +192,64 @@ paths:
         default:
           description: Unexpected error
   
-  /cards_interface:
-    get:
-      summary: Get HTML page to add a new card
-      description: |
-        This cards endpoint method returns an HTML page that a user defined by a uuid has associated to him can associate a credit card
-      parameters:
-        - name: uuid
-          description: The user uuid
-          required: true
-          type: string
-          in: header
-      tags:
-        - Cards
-      responses:
-        200:
-          description: An HTML page is returned.
-        default:
-          description: Unexpected error
-  /cards:
-    get:
-      summary: Get cards per user
-      description: |
-        This cards endpoint method returns all cards that a user defined by a uuid has associated to him
-      parameters:
-        - name: user_uuid
-          description: The user uuid
-          required: true
-          type: string
-          in: header
-      tags:
-        - Cards
-      responses:
-        200:
-          description: A json array with all of the user cards
-        401:
-          description: The user doens't have any card associated to him
-        default:
-          description: Unexpected error
-          
+  /cards/create/:
     post:
-      summary: Associate a card to an user
+      summary: Get URL to add a new card
       description: |
-        This cards endpoint method associates a cards to an user defined by a uuid that has associated to him
+        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can associate a credit card
       parameters:
-        - name: user_uuid
-          description: The user uiid
-          required: true
-          type: string
-          in: header
-        - name: number
-          description: The credit card number
-          required: true
-          type: string
-          in: header
-        - name: expire_month
-          description: Expire month
-          required: true
-          type: integer
-          in: header
-        - name: expire_year
-          description: Expire year
-          required: true
-          type: integer
-          in: header
-        - name: cvv2
-          description: CVV of credit card
-          required: true
-          type: integer
-          in: header
-        - name: first_name
-          description: First Name in credit card
-          required: true
-          type: string
-          in: header
-        - name: last_name
-          description: Last Name in credit card
-          required: true
-          type: string
-          in: header
-      tags:
-        - Cards
-      responses:
-        200:
-          description: The card has been associated successfully.
-        401:
-          description: The card already exists.
-        403:
-          description: The card expired.
-        default:
-          description: Unexpected error
-    
-    delete:
-      summary: Delete a card
-      description:  |
-          This cards endpoint method deletes a cards of an user defined by a uuid that has associated to him
-      parameters:
-        - name: user_uuid
+        - name: user_id
           description: The user uuid
           required: true
           type: string
           in: header
-        - name: card_id
-          description: The card uuid
-          required: true
-          type: string
-          in: header
       tags:
         - Cards
       responses:
-        200:
-          description: The card has been deleted successfully.
-        401:
-          description: The user doesn't have this card associated to him.
+        302:
+          description: The card has been associated successfully.
         default:
           description: Unexpected error
           
-    put:
-      summary: Update a card
-      description:  |
-          This cards endpoint method updates a cards of an user defined by a uuid that has associated to him
+  /cards/update/:
+    post:
+      summary: Get URL to update a card
+      description: |
+        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can update a credit card
       parameters:
-        - name: user_uuid
-          description: The user uiid
+        - name: user_id
+          description: The user uuid
           required: true
-          type: string
-          in: header
-        - name: card_id
-          description: The card uuid
-          required: true
-          type: string
-          in: header
-        - name: number
-          description: The credit card number
-          required: false
-          type: string
-          in: header
-        - name: expire_month
-          description: Expire month
-          required: false
-          type: integer
-          in: header
-        - name: expire_year
-          description: Expire year
-          required: false
-          type: integer
-          in: header
-        - name: cvv2
-          description: CVV of credit card
-          required: false
-          type: integer
-          in: header
-        - name: first_name
-          description: First Name in credit card
-          required: false
-          type: string
-          in: header
-        - name: last_name
-          description: Last Name in credit card
-          required: false
           type: string
           in: header
       tags:
         - Cards
       responses:
-        200:
-          description: The card has been updated successfully.
-        401:
-          description: The user doesn't have this card associated to him.
+        302:
+          description: The card has been associated successfully.
         default:
           description: Unexpected error
+          
+  /cards/delete/:
+    post:
+      summary: Get URL to delete a card
+      description: |
+        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can delete a credit card
+      parameters:
+        - name: user_id
+          description: The user uuid
+          required: true
+          type: string
+          in: header
+      tags:
+        - Cards
+      responses:
+        302:
+          description: Redirect URL.
+        default:
+          description: Unexpected error
+  
+  
+ 
           
   

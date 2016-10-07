@@ -57,15 +57,15 @@ class InitUpdateView(views.APIView):
 
 class InitDeleteView(views.APIView):
     @staticmethod
-    def get(request, *args, **kwargs):
+    def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        serializer = UserIDSerializer(data=kwargs)
+        #serializer = UserIDSerializer(data=kwargs)
 
-        #serializer = UserIDSerializer(data=request.data)
+        serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
-            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            #data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
             for key in request.session.keys():
