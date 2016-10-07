@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<head>
+    {% load static %}
+    <!-- Bootstrap Core CSS -->
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+</head>
+<body>
+    <div class="container">
+        <div class="row-fluid">
+          <form class="form-horizontal" id="form" method="post">
+            <fieldset>
+              <div id="legend">
+                <legend class="">Update Card</legend>
+              </div>
+
+                <div>
+                    {{ request.session.error }}
+                </div>
+              <!-- Name -->
+              <div class="control-group">
+                <label class="control-label"  for="first_name">First Name</label>
+                <div class="controls">
+                  <input type="text" id="first_name" name="first_name" value="{{ request.session.first_name }}" class="input-xlarge">
+                    {{ request.session.first_name_error }}
+                </div>
+              </div>
+
+                <div class="control-group">
+                 <label class="control-label"  for="last_name">Last Name</label>
+                <div class="controls">
+                    <input type="text" id="last_name" name="last_name" value="{{ request.session.last_name }}" class="input-xlarge">
+                    {{ request.session.last_name_error }}
+                </div>
+              </div>
+
+              <!-- Card Number -->
+              <div class="control-group">
+                <label class="control-label" for="number">Card Number</label>
+                <div class="controls">
+                  <input type="text" id="number" name="number" value="{{ request.session.number }}" class="input-xlarge">
+                    {{ request.session.number_error }}
+                </div>
+              </div>
+
+              <!-- Expiry-->
+              <div class="control-group">
+                <label class="control-label" for="password">Card Expiry Date</label>
+                <div class="controls">
+                    <input type="text" id="expire_month" name="expire_month" value="{{ request.session.expire_month }}" class="input-mini">
+                    {{ request.session.expire_month_error }}
+                    /
+                    <input type="text" id="expire_year" name="expire_year" value="{{ request.session.expire_year }}" class="input-small">
+                    {{ request.session.expire_year_error }}
+
+                </div>
+              </div>
+
+              <!-- CVV -->
+              <div class="control-group">
+                <label class="control-label"  for="cvv2">Card CVV</label>
+                <div class="controls">
+                  <input type="text" id="cvv2" name="cvv2" value="{{ request.session.cvv2 }}" class="span2">
+                    {{ request.session.cvv2_error }}
+                </div>
+              </div>
+
+                <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                <input type="hidden" id="choose" name="choose" value="False" class="span2">
+
+
+              <!-- Submit -->
+              <div class="control-group">
+
+                <div class="controls">
+                  <input type="button" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger" value="Cancel">
+                  <input type="submit" class="btn btn-success" value="Update Card">
+
+                </div>
+              </div>
+
+            </fieldset>
+          </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        window.onload = function(){
+            var cache_id = document.getElementById("cache_id");
+            cache_id.value = window.location.href.split("/")[window.location.href.split("/").length -3];
+            var form = document.getElementById("form");
+            form.action = "/api/v1/cards/edit_card/" + window.location.href.split("/")[window.location.href.split("/").length -3] + "/"
+            + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
+        }
+
+    </script>
+</body>
+</html>
