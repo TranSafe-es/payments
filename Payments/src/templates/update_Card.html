@@ -14,15 +14,19 @@
                 <legend class="">Update Card</legend>
               </div>
 
-                <div>
+                {% if request.session.error %}
+                <div class="alert alert-danger">
                     {{ request.session.error }}
                 </div>
+                {% endif %}
               <!-- Name -->
               <div class="control-group">
                 <label class="control-label"  for="first_name">First Name</label>
                 <div class="controls">
                   <input type="text" id="first_name" name="first_name" value="{{ request.session.first_name }}" class="input-xlarge">
-                    {{ request.session.first_name_error }}
+                    {% if request.session.first_name_error %}
+                        <font style="color:darkred"> {{ request.session.first_name_error }} </font>
+                    {% endif %}
                 </div>
               </div>
 
@@ -30,7 +34,9 @@
                  <label class="control-label"  for="last_name">Last Name</label>
                 <div class="controls">
                     <input type="text" id="last_name" name="last_name" value="{{ request.session.last_name }}" class="input-xlarge">
-                    {{ request.session.last_name_error }}
+                    {% if request.session.last_name_error %}
+                        <font style="color:darkred"> {{ request.session.last_name_error }} </font>
+                    {% endif %}
                 </div>
               </div>
 
@@ -39,7 +45,9 @@
                 <label class="control-label" for="number">Card Number</label>
                 <div class="controls">
                   <input type="text" id="number" name="number" value="{{ request.session.number }}" class="input-xlarge">
-                    {{ request.session.number_error }}
+                    {% if request.session.number_error %}
+                        <font style="color:darkred"> {{ request.session.number_error }} </font>
+                    {% endif %}
                 </div>
               </div>
 
@@ -48,10 +56,14 @@
                 <label class="control-label" for="password">Card Expiry Date</label>
                 <div class="controls">
                     <input type="text" id="expire_month" name="expire_month" value="{{ request.session.expire_month }}" class="input-mini">
-                    {{ request.session.expire_month_error }}
+                    {% if request.session.expire_month_error %}
+                        <font style="color:darkred"> {{ request.session.expire_month_error }} </font>
+                    {% endif %}
                     /
                     <input type="text" id="expire_year" name="expire_year" value="{{ request.session.expire_year }}" class="input-small">
-                    {{ request.session.expire_year_error }}
+                    {% if request.session.expire_year_error %}
+                        <font style="color:darkred"> {{ request.session.expire_year_error }} </font>
+                    {% endif %}
 
                 </div>
               </div>
@@ -61,7 +73,9 @@
                 <label class="control-label"  for="cvv2">Card CVV</label>
                 <div class="controls">
                   <input type="text" id="cvv2" name="cvv2" value="{{ request.session.cvv2 }}" class="span2">
-                    {{ request.session.cvv2_error }}
+                    {% if request.session.cvv2_error %}
+                        <font style="color:darkred"> {{ request.session.cvv2_error }} </font>
+                    {% endif %}
                 </div>
               </div>
 
