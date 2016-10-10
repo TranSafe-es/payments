@@ -42,6 +42,7 @@ class InitPaymentView(views.APIView):
 
 class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
 
+    @never_cache
     def retrieve(self, request, *args, **kwargs):
         template = "payment.html"
         for key in request.session.keys():
@@ -78,66 +79,6 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
         if cache.get(request.data["cache_id"]) is not None:
             request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
             user_id = cache.get(request.data["cache_id"])["user_id"]
-            if Card.objects.filter(user_id=user_id).count() == 0:
-                request.session["defined"] = True
-            else:
-                request.session["defined"] = False
-            if serializer.is_valid():
-                if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"]).count() is 1:
-
-                    request.session["error"] = "This card already exists"
-                    for data in request.data:
-                            request.session[data] = str(request.data[data])
-                    template = "add_Card.html"
-                    return render(request, template)
-                else:
-                    errors = False
-                    if not len(serializer.validated_data["number"]) == 16:
-                        errors = True
-                        request.session["number_error"] = "The card number needs 16 digits"
-                    if not len(serializer.validated_data["cvv2"]) == 3:
-                        errors = True
-                        request.session["cvv2_error"] = "The CVV value needs 3 digits"
-                    if serializer.validated_data["expire_month"] < 1 or serializer.validated_data["expire_month"] > 12:
-                        errors = True
-                        request.session["expire_month_error"] = "Month should be between 1 and 12"
-
-                    if errors:
-                        for data in request.data:
-                            request.session[data] = str(request.data[data])
-                        template = "add_Card.html"
-                        return render(request, template)
-
-                    now = datetime.datetime.now()
-
-                    if serializer.validated_data["expire_year"] < now.year:
-                        if serializer.validated_data["expire_year"] == now.year and \
-                           serializer.validated_data["expire_month"] < now.month:
-                            request.session["date_error"] = "This expire date is not valid"
-                            for data in request.data:
-                                request.session[data] = str(request.data[data])
-                            template = "add_Card.html"
-                            return render(request, template)
-
-                    if Card.objects.filter(user_id=user_id).count() > 0:
-                        if serializer.validated_data["defined"] is True:
-                            for c_to_edit in Card.objects.all():
-                                if c_to_edit.user_id == user_id and c_to_edit.defined is True:
-                                    c_to_edit.defined = False
-                                    c_to_edit.save()
-                                    break
-
-                    Card.objects.create(user_id=user_id,
-                                        card_id=uuid.uuid4(),
-                                        number=serializer.validated_data["number"],
-                                        expire_month=serializer.validated_data["expire_month"],
-                                        expire_year=serializer.validated_data["expire_year"],
-                                        cvv2=serializer.validated_data["cvv2"],
-                                        first_name=serializer.validated_data["first_name"],
-                                        last_name=serializer.validated_data["last_name"],
-                                        defined=serializer.validated_data["defined"])
-
-                    return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
 
             for error in serializer.errors:
                 s = error + "_error"
@@ -145,5 +86,5 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
 
         for data in request.data:
             request.session[data] = str(request.data[data])
-        template = "add_Card.html"
+        template = "payment.html"
         return render(request, template)

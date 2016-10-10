@@ -18,29 +18,28 @@
             card_id_selected.value = document.getElementById("card_id").value;
         }
 
+        function submit(){
+            document.getElementById("form2").submit();
+        }
+
     </script>
 </head>
 <body>
     <div class="container">
         <div class="row-fluid">
-          <form class="form-horizontal" id="form" method="post">
-            <fieldset>
               <div id="legend">
                 <legend class="">Confirm Payment</legend>
               </div>
-
+        <div>
               <!-- Name -->
                 <div class="control-group">
-                    <label class="span2">Description:</label>  {{ request.session.description }}
-
+                    <label style="min-height: 100%" class="span2">Description:</label>  {{ request.session.description }}
                 </div>
 
                 <div class="control-group">
-                 <label class="span2">Amount:</label>  {{ request.session.amount }} €
-
-
-
-              </div>
+                 <label style="min-height: 100%" class="span2">Amount:</label>  {{ request.session.amount }} €
+                </div>
+            <form id="form1" method="post">
 
               <div id="cards">
                     <div class="control-group">
@@ -50,42 +49,45 @@
                                     {% for c in request.session.card %}
                                         <option value="{{ c.card_id }}">{{ c.number }}</option>
                                     {%  endfor  %}
+                                    <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                                    <input type="hidden" id="payments" name="payments" value="True" class="span2">
 
+
+                                    <input style="vertical-align: top" type="submit" id="add_card" class="btn btn-info" value="Add Card">
                                 </select>
 
 
                             </div>
                     </div>
-              </div>
+                </div>
+                                            </form>
+
                 <div id="alert" class="alert alert-danger">
                     {{ request.session.error }}
                 </div>
                 <input value="{{ request.session.error }}" id="error" type="hidden">
+</div>
+            <div class="control-group">
+                <form id="form2" method="post">
+                    <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                    <input type="hidden" id="card_id_selected" name="card_id" class="span2">
+                    <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger" value="Cancel">
+                    <input type="button" id="button" class="btn btn-success" value="Confirm Payment" onclick="submit();return confirm('Are you sure that you want to confirm this payment?')">
 
-                <input type="hidden" id="cache_id" name="cache_id" class="span2">
-                <input type="hidden" id="card_id_selected" name="card_id" class="span2">
-
-
-              <!-- Submit -->
-              <div class="control-group">
-
-                <div class="controls">
-                  <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger" value="Cancel">
-                  <input type="submit" id="button" class="btn btn-success" value="Confirm Payment" onclick="return confirm('Are you sure that you want to confirm this payment?')">
-
-                </div>
+                </form>
               </div>
 
-            </fieldset>
-          </form>
         </div>
     </div>
     <script type="text/javascript">
         window.onload = function(){
             var cache_id = document.getElementById("cache_id");
             cache_id.value = window.location.href.split("/")[window.location.href.split("/").length -2];
-            var form = document.getElementById("form");
+            var form = document.getElementById("form2");
             form.action = "/api/v1/payments/confirm_payment/" + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
+            var form1 = document.getElementById("form1");
+            form1.action = "/api/v1/cards/add_card/" + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
+
             var error = document.getElementById("error");
             var card_id_selected = document.getElementById("card_id_selected");
             card_id_selected.value = document.getElementById("card_id").value;

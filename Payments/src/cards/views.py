@@ -79,92 +79,125 @@ class InitDeleteView(views.APIView):
 
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
+    @never_cache
     def retrieve(self, request, *args, **kwargs):
+
         template = "add_Card.html"
-        for key in request.session.keys():
-            del request.session[key]
+        try:
+            if request.session["payments"] is True:
+                for key in request.session.keys():
+                    if key != "cancel" and key != "payments":
+                        del request.session[key]
+        except KeyError:
+            for key in request.session.keys():
+                del request.session[key]
+            request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
 
         if Card.objects.filter(user_id=cache.get(kwargs["cache_id"])["user_id"]).count() == 0:
             request.session["defined"] = True
         else:
             request.session["defined"] = False
-        request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
         return render(request, template)
 
+    @never_cache
     def create(self, request, **kwargs):
-        serializer = CardSerializer(data=request.data)
-        for key in request.session.keys():
-            del request.session[key]
-        if cache.get(request.data["cache_id"]) is not None:
-            request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
-            user_id = cache.get(request.data["cache_id"])["user_id"]
-            if Card.objects.filter(user_id=user_id).count() == 0:
-                request.session["defined"] = True
-            else:
-                request.session["defined"] = False
-            if serializer.is_valid():
-                if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"]).count() is 1:
+        if "payments" not in request.data:
+            serializer = CardSerializer(data=request.data)
+            try:
+                if request.session["payments"] is True:
+                    for key in request.session.keys():
+                        if key != "cancel" and key != "payments":
+                            del request.session[key]
+            except KeyError:
+                for key in request.session.keys():
+                    del request.session[key]
 
-                    request.session["error"] = "This card already exists"
-                    for data in request.data:
-                            request.session[data] = str(request.data[data])
-                    template = "add_Card.html"
-                    return render(request, template)
+            if cache.get(request.data["cache_id"]) is not None:
+                try:
+                    if request.session["payments"] is not True:
+                        pass
+                except KeyError:
+                    request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
+
+                user_id = cache.get(request.data["cache_id"])["user_id"]
+                if Card.objects.filter(user_id=user_id).count() == 0:
+                    request.session["defined"] = True
                 else:
-                    errors = False
-                    if not len(serializer.validated_data["number"]) == 16:
-                        errors = True
-                        request.session["number_error"] = "The card number needs 16 digits"
-                    if not len(serializer.validated_data["cvv2"]) == 3:
-                        errors = True
-                        request.session["cvv2_error"] = "The CVV value needs 3 digits"
-                    if serializer.validated_data["expire_month"] < 1 or serializer.validated_data["expire_month"] > 12:
-                        errors = True
-                        request.session["expire_month_error"] = "Month should be between 1 and 12"
+                    request.session["defined"] = False
+                if serializer.is_valid():
+                    if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"]).count() is 1:
 
-                    if errors:
+                        request.session["error"] = "This card already exists"
                         for data in request.data:
-                            request.session[data] = str(request.data[data])
+                                request.session[data] = str(request.data[data])
                         template = "add_Card.html"
                         return render(request, template)
+                    else:
+                        errors = False
+                        if not len(serializer.validated_data["number"]) == 16:
+                            errors = True
+                            request.session["number_error"] = "The card number needs 16 digits"
+                        if not len(serializer.validated_data["cvv2"]) == 3:
+                            errors = True
+                            request.session["cvv2_error"] = "The CVV value needs 3 digits"
+                        if serializer.validated_data["expire_month"] < 1 or serializer.validated_data["expire_month"] > 12:
+                            errors = True
+                            request.session["expire_month_error"] = "Month should be between 1 and 12"
 
-                    now = datetime.datetime.now()
-
-                    if serializer.validated_data["expire_year"] < now.year:
-                        if serializer.validated_data["expire_year"] == now.year and \
-                           serializer.validated_data["expire_month"] < now.month:
-                            request.session["date_error"] = "This expire date is not valid"
+                        if errors:
                             for data in request.data:
                                 request.session[data] = str(request.data[data])
                             template = "add_Card.html"
                             return render(request, template)
 
-                    if Card.objects.filter(user_id=user_id).count() > 0:
-                        if serializer.validated_data["defined"] is True:
-                            for c_to_edit in Card.objects.all():
-                                if c_to_edit.user_id == user_id and c_to_edit.defined is True:
-                                    c_to_edit.defined = False
-                                    c_to_edit.save()
-                                    break
+                        now = datetime.datetime.now()
 
-                    Card.objects.create(user_id=user_id,
-                                        card_id=uuid.uuid4(),
-                                        number=serializer.validated_data["number"],
-                                        expire_month=serializer.validated_data["expire_month"],
-                                        expire_year=serializer.validated_data["expire_year"],
-                                        cvv2=serializer.validated_data["cvv2"],
-                                        first_name=serializer.validated_data["first_name"],
-                                        last_name=serializer.validated_data["last_name"],
-                                        defined=serializer.validated_data["defined"])
+                        if serializer.validated_data["expire_year"] < now.year:
+                            if serializer.validated_data["expire_year"] == now.year and \
+                               serializer.validated_data["expire_month"] < now.month:
+                                request.session["date_error"] = "This expire date is not valid"
+                                for data in request.data:
+                                    request.session[data] = str(request.data[data])
+                                template = "add_Card.html"
+                                return render(request, template)
 
-                    return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
+                        if Card.objects.filter(user_id=user_id).count() > 0:
+                            if serializer.validated_data["defined"] is True:
+                                for c_to_edit in Card.objects.all():
+                                    if c_to_edit.user_id == user_id and c_to_edit.defined is True:
+                                        c_to_edit.defined = False
+                                        c_to_edit.save()
+                                        break
 
-            for error in serializer.errors:
-                s = error + "_error"
-                request.session[s] = str(serializer.errors[error][0])
+                        Card.objects.create(user_id=user_id,
+                                            card_id=uuid.uuid4(),
+                                            number=serializer.validated_data["number"],
+                                            expire_month=serializer.validated_data["expire_month"],
+                                            expire_year=serializer.validated_data["expire_year"],
+                                            cvv2=serializer.validated_data["cvv2"],
+                                            first_name=serializer.validated_data["first_name"],
+                                            last_name=serializer.validated_data["last_name"],
+                                            defined=serializer.validated_data["defined"])
 
-        for data in request.data:
-            request.session[data] = str(request.data[data])
+                        try:
+                            if request.session["payments"] is True:
+                                del request.session["payments"]
+                                return redirect(request.session["cancel"])
+                        except KeyError:
+                            return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
+
+                for error in serializer.errors:
+                    s = error + "_error"
+                    request.session[s] = str(serializer.errors[error][0])
+
+            for data in request.data:
+                if data != "defined":
+                    request.session[data] = str(request.data[data])
+            template = "add_Card.html"
+            return render(request, template)
+
+        request.session["payments"] = True
+        request.session["cancel"] = request.META.get("HTTP_REFERER")
         template = "add_Card.html"
         return render(request, template)
 
@@ -273,23 +306,23 @@ class UpdateCard(views.APIView):
                         except KeyError:
                             pass
 
-                        try:
-                            if serializer.validated_data["defined"] is True:
-                                if c.defined is False:
-                                    for c_to_edit in Card.objects.all():
-                                        if c_to_edit.user_id == user_id and c_to_edit.defined is True:
-                                            c_to_edit.defined = False
-                                            c_to_edit.save()
-                                            break
-                                    c.defined = True
-                        except KeyError:
-                            pass
                         if errors:
                             for data in request.data:
                                 request.session[data] = str(request.data[data])
                             template = "update_Card.html"
                             return render(request, template)
                         else:
+                            try:
+                                if serializer.validated_data["defined"] is True:
+                                    if c.defined is False:
+                                        for c_to_edit in Card.objects.all():
+                                            if c_to_edit.user_id == user_id and c_to_edit.defined is True:
+                                                c_to_edit.defined = False
+                                                c_to_edit.save()
+                                                break
+                                        c.defined = True
+                            except KeyError:
+                                pass
                             c.save()
                             for key in request.session.keys():
                                 del request.session[key]
