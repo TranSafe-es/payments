@@ -12,46 +12,50 @@
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="row-fluid">
-          <form class="form-horizontal" id="form" method="post">
-            <fieldset>
-              <div id="legend">
-                <legend class="">Update card - Choose the card to update</legend>
-              </div>
-                <div>
-                    {{ request.session.error }}
-                </div>
-              <!-- Name -->
-              <div class="control-group">
-                <label class="control-label"  for="card_id">Cards</label>
-                <div class="controls">
-                      <select id="card_id" onchange="changeAction()">
-                        {% for c in request.session.card %}
-                            <option value="{{ c.card_id }}">{{ c.number }}</option>
-                        {%  endfor  %}
-                      </select>
-                </div>
-              </div>
+        <div class="container">
+            <div class="row-fluid">
+              <form class="form-horizontal" id="form" method="post">
+                <fieldset>
+                  <div id="legend">
+                    <legend class="">Update card - Choose the card to update</legend>
+                  </div>
 
-                <input type="hidden" id="cache_id" name="cache_id" class="span2">
-                <input type="hidden" id="choose" name="choose" value="True" class="span2">
+                    <div id="alert" class="alert alert-info">
+                        {{ request.session.error }}
+                    </div>
+
+                  <!-- Name -->
+                    <div id="cards">
+                        <div class="control-group">
+                            <label class="control-label"  for="card_id">Cards</label>
+                                <div class="controls">
+                                    <select id="card_id" onchange="changeAction()">
+                                        {% for c in request.session.card %}
+                                            <option value="{{ c.card_id }}">{{ c.number }}</option>
+                                        {%  endfor  %}
+                                    </select>
+                                </div>
+                        </div>
+                    </div>
+
+                    <input value="{{ request.session.error }}" id="error" type="hidden">
+                    <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                    <input type="hidden" id="choose" name="choose" value="True" class="span2">
 
 
+                  <!-- Submit -->
+                  <div class="control-group">
 
-              <!-- Submit -->
-              <div class="control-group">
+                    <div class="controls">
+                      <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger">
+                      <input type="submit" id="button" class="btn btn-success" value="Update Card">
 
-                <div class="controls">
-                  <input type="button" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger" value="Cancel">
-                  <input type="submit" class="btn btn-success" value="Update Card">
+                    </div>
+                  </div>
 
-                </div>
-              </div>
-
-            </fieldset>
-          </form>
-        </div>
+                </fieldset>
+              </form>
+            </div>
     </div>
     <script type="text/javascript">
         window.onload = function(){
@@ -60,6 +64,20 @@
             var form = document.getElementById("form");
             form.action = "/api/v1/cards/edit_card/" + window.location.href.split("/")[window.location.href.split("/").length -2] + "/"
             + document.getElementById("card_id").value + "/";
+            var error = document.getElementById("error");
+            if(error.value == ""){
+                document.getElementById("cards").style.display = "block";
+                document.getElementById("alert").style.display = "none";
+                document.getElementById("button").style.display = "inline";
+                document.getElementById("cancel").value = "Cancel";
+
+            }else{
+                document.getElementById("alert").style.display = "block";
+                document.getElementById("cards").style.display = "none";
+                document.getElementById("button").style.display = "none";
+                document.getElementById("cancel").value = "Close";
+                document.getElementById("cancel").style.float = "right"
+            }
         }
 
     </script>

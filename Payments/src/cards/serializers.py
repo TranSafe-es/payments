@@ -8,7 +8,7 @@ class CardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
         fields = ('cache_id', 'card_id', 'number', 'expire_month', 'expire_year', 'cvv2', 'first_name', 'last_name',
-                  'total')
+                  'total', 'defined')
         read_only_fields = ('card_id', 'total')
 
 
@@ -18,7 +18,7 @@ class UpdateCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
         fields = ('cache_id', 'number', 'expire_month', 'expire_year', 'cvv2', 'first_name', 'last_name',
-                  'total')
+                  'total', 'defined')
         read_only_fields = ('card_id', )
 
 

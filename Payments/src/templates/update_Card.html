@@ -3,7 +3,18 @@
     {% load static %}
     <!-- Bootstrap Core CSS -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <script>
+        function changeValue(){
+            var check = document.getElementById("checkbox");
+            var defined = document.getElementById("defined");
+            if(defined.value == "True"){
+                defined.value = "False";
+            }else{
+                defined.value = "True";
+            }
 
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -44,7 +55,7 @@
               <div class="control-group">
                 <label class="control-label" for="number">Card Number</label>
                 <div class="controls">
-                  <input type="text" id="number" name="number" value="{{ request.session.number }}" class="input-xlarge">
+                  <input disabled type="text" id="number" name="number" value="{{ request.session.number }}" class="input-xlarge">
                     {% if request.session.number_error %}
                         <font style="color:darkred"> {{ request.session.number_error }} </font>
                     {% endif %}
@@ -72,15 +83,23 @@
               <div class="control-group">
                 <label class="control-label"  for="cvv2">Card CVV</label>
                 <div class="controls">
-                  <input type="text" id="cvv2" name="cvv2" value="{{ request.session.cvv2 }}" class="span2">
+                  <input disabled type="text" id="cvv2" name="cvv2" value="{{ request.session.cvv2 }}" class="span2">
                     {% if request.session.cvv2_error %}
                         <font style="color:darkred"> {{ request.session.cvv2_error }} </font>
                     {% endif %}
                 </div>
               </div>
+              <div class="control-group">
+
+                <div class="controls">
+                    <input onchange="changeValue()" type="checkbox" id="checkbox" value="{{ request.session.defined }}"> Define this card to receive money?
+                </div>
+              </div>
 
                 <input type="hidden" id="cache_id" name="cache_id" class="span2">
                 <input type="hidden" id="choose" name="choose" value="False" class="span2">
+                <input type="hidden" id="defined" name="defined" class="span2">
+
 
 
               <!-- Submit -->
@@ -104,6 +123,18 @@
             var form = document.getElementById("form");
             form.action = "/api/v1/cards/edit_card/" + window.location.href.split("/")[window.location.href.split("/").length -3] + "/"
             + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
+            var check = document.getElementById("checkbox");
+            var defined = document.getElementById("defined");
+            if (check.value != "True") {
+                check.checked = false;
+                check.disabled = false;
+                defined.value = "False";
+            } else {
+                defined.value = "True";
+                check.checked = true;
+                check.disabled = true;
+            }
+
         }
 
     </script>

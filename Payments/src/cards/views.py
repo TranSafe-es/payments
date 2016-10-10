@@ -12,15 +12,15 @@ from django.http import HttpResponse
 class InitAddView(views.APIView):
 
     @staticmethod
-    def post(request, *args, **kwargs):
+    def get(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        #  serializer = UserIDSerializer(data=kwargs)
+        serializer = UserIDSerializer(data=kwargs)
 
-        serializer = UserIDSerializer(data=request.data)
+        #serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
-            #  data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
             for key in request.session.keys():
@@ -35,15 +35,15 @@ class InitAddView(views.APIView):
 class InitUpdateView(views.APIView):
 
     @staticmethod
-    def post(request, *args, **kwargs):
+    def get(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        #  serializer = UserIDSerializer(data=kwargs)
+        serializer = UserIDSerializer(data=kwargs)
 
-        serializer = UserIDSerializer(data=request.data)
+        #serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
-            #  data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
             for key in request.session.keys():
@@ -84,6 +84,10 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
         for key in request.session.keys():
             del request.session[key]
 
+        if Card.objects.filter(user_id=cache.get(kwargs["cache_id"])["user_id"]).count() == 0:
+            request.session["defined"] = True
+        else:
+            request.session["defined"] = False
         request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
         return render(request, template)
 
@@ -94,9 +98,12 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
         if cache.get(request.data["cache_id"]) is not None:
             request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
             user_id = cache.get(request.data["cache_id"])["user_id"]
+            if Card.objects.filter(user_id=user_id).count() == 0:
+                request.session["defined"] = True
+            else:
+                request.session["defined"] = False
             if serializer.is_valid():
-                if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"],
-                                       cvv2=serializer.validated_data["cvv2"]).count() is 1:
+                if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"]).count() is 1:
 
                     request.session["error"] = "This card already exists"
                     for data in request.data:
@@ -132,6 +139,14 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                             template = "add_Card.html"
                             return render(request, template)
 
+                    if Card.objects.filter(user_id=user_id).count() > 0:
+                        if serializer.validated_data["defined"] is True:
+                            for c_to_edit in Card.objects.all():
+                                if c_to_edit.user_id == user_id and c_to_edit.defined is True:
+                                    c_to_edit.defined = False
+                                    c_to_edit.save()
+                                    break
+
                     Card.objects.create(user_id=user_id,
                                         card_id=uuid.uuid4(),
                                         number=serializer.validated_data["number"],
@@ -139,7 +154,8 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                                         expire_year=serializer.validated_data["expire_year"],
                                         cvv2=serializer.validated_data["cvv2"],
                                         first_name=serializer.validated_data["first_name"],
-                                        last_name=serializer.validated_data["last_name"])
+                                        last_name=serializer.validated_data["last_name"],
+                                        defined=serializer.validated_data["defined"])
 
                     return redirect(cache.get(serializer.validated_data["cache_id"])["url"])
 
@@ -173,6 +189,8 @@ class UpdateCardView(views.APIView):
         for c in cards:
             request.session["card"].append({'card_id': c["card_id"], 'number': c["number"]})
 
+        if len(cards) == 0:
+            request.session["error"] = "This user doesn't have any cards"
         request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
         return render(request, template)
 
@@ -187,10 +205,13 @@ class UpdateCard(views.APIView):
 
             c = Card.objects.get(card_id=kwargs["card_id"])
 
+            request.session["number"] = "************" + c.number[-4:]
             request.session["first_name"] = c.first_name
             request.session["last_name"] = c.last_name
             request.session["expire_month"] = c.expire_month
             request.session["expire_year"] = c.expire_year
+            request.session["defined"] = c.defined
+            request.session["cvv2"] = "***"
             request.session["cancel"] = request.META.get("HTTP_REFERER")
             return render(request, template)
 
@@ -220,22 +241,6 @@ class UpdateCard(views.APIView):
                         c = Card.objects.get(user_id=user_id,
                                              card_id=kwargs["card_id"])
 
-                        try:
-                            if len(serializer.validated_data["number"]) == 16:
-                                c.number = serializer.validated_data["number"]
-                            else:
-                                errors = True
-                                request.session["number_error"] = "The card number should contain 16 digits"
-                        except KeyError:
-                            pass
-                        try:
-                            if len(serializer.validated_data["cvv2"]) == 3:
-                                c.cvv2 = serializer.validated_data["cvv2"]
-                            else:
-                                errors = True
-                                request.session["cvv2_error"] = "The card cvv2 should contain 3 digits"
-                        except KeyError:
-                            pass
                         try:
                             c.first_name = serializer.validated_data["first_name"]
                         except KeyError:
@@ -268,6 +273,17 @@ class UpdateCard(views.APIView):
                         except KeyError:
                             pass
 
+                        try:
+                            if serializer.validated_data["defined"] is True:
+                                if c.defined is False:
+                                    for c_to_edit in Card.objects.all():
+                                        if c_to_edit.user_id == user_id and c_to_edit.defined is True:
+                                            c_to_edit.defined = False
+                                            c_to_edit.save()
+                                            break
+                                    c.defined = True
+                        except KeyError:
+                            pass
                         if errors:
                             for data in request.data:
                                 request.session[data] = str(request.data[data])
@@ -333,6 +349,13 @@ class DeleteCard(views.APIView):
                 else:
                     c = Card.objects.get(user_id=user_id,
                                          card_id=kwargs["card_id"])
+                    if c.defined is True:
+                        if Card.objects.filter(user_id=user_id).count() > 0:
+                            for c_to_edit in Card.objects.all():
+                                if c_to_edit.user_id == user_id:
+                                    c_to_edit.defined = True
+                                    c_to_edit.save()
+                                    break
                     c.delete()
                     for key in request.session.keys():
                         del request.session[key]
