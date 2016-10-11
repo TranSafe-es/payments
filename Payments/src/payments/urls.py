@@ -7,7 +7,7 @@ urlpatterns = [
         views.InitPaymentView.as_view()),
     #  url(r'^update/(?P<user_id>.+)/$', views.InitUpdateView.as_view()),
     #  url(r'^delete/(?P<user_id>.+)/$', views.InitDeleteView.as_view()),
-    #url(r'^create/$', views.InitAddView.as_view()),
+    #url(r'^create/$', views.InitPaymentView.as_view()),
     #url(r'^update/$', views.InitUpdateView.as_view()),
     #url(r'^delete/$', views.InitDeleteView.as_view()),
 

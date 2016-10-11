@@ -6,20 +6,19 @@ import uuid
 import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
-from django.http import HttpResponse
+from rest_framework.response import Response
 
 
 class InitAddView(views.APIView):
-
     @staticmethod
     def get(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
         serializer = UserIDSerializer(data=kwargs)
 
-        #serializer = UserIDSerializer(data=request.data)
+        # serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            # data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
             data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
@@ -27,22 +26,21 @@ class InitAddView(views.APIView):
                 del request.session[key]
             return redirect('/api/v1/cards/add_card/' + cache_id + "/")
         else:
-            return HttpResponse({'status': 'Bad Request',
-                                 'message': 'Unexpected error'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'Bad Request',
+                             'message': 'Unexpected error'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class InitUpdateView(views.APIView):
-
     @staticmethod
     def get(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
         serializer = UserIDSerializer(data=kwargs)
 
-        #serializer = UserIDSerializer(data=request.data)
+        # serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            #data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            # data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
             data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
@@ -50,9 +48,9 @@ class InitUpdateView(views.APIView):
                 del request.session[key]
             return redirect('/api/v1/cards/edit_card/' + cache_id + "/")
         else:
-            return HttpResponse({'status': 'Bad Request',
-                                 'message': 'Unexpected error'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'Bad Request',
+                             'message': 'Unexpected error'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class InitDeleteView(views.APIView):
@@ -73,9 +71,9 @@ class InitDeleteView(views.APIView):
 
             return redirect('/api/v1/cards/delete_card/' + cache_id + "/")
         else:
-            return HttpResponse({'status': 'Bad Request',
-                                 'message': 'Unexpected error'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'Bad Request',
+                             'message': 'Unexpected error'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
@@ -129,7 +127,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
 
                         request.session["error"] = "This card already exists"
                         for data in request.data:
-                                request.session[data] = str(request.data[data])
+                            request.session[data] = str(request.data[data])
                         template = "add_Card.html"
                         return render(request, template)
                     else:
@@ -140,7 +138,8 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                         if not len(serializer.validated_data["cvv2"]) == 3:
                             errors = True
                             request.session["cvv2_error"] = "The CVV value needs 3 digits"
-                        if serializer.validated_data["expire_month"] < 1 or serializer.validated_data["expire_month"] > 12:
+                        if serializer.validated_data["expire_month"] < 1 or serializer.validated_data[
+                            "expire_month"] > 12:
                             errors = True
                             request.session["expire_month_error"] = "Month should be between 1 and 12"
 
@@ -154,7 +153,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
 
                         if serializer.validated_data["expire_year"] < now.year:
                             if serializer.validated_data["expire_year"] == now.year and \
-                               serializer.validated_data["expire_month"] < now.month:
+                                            serializer.validated_data["expire_month"] < now.month:
                                 request.session["date_error"] = "This expire date is not valid"
                                 for data in request.data:
                                     request.session[data] = str(request.data[data])
@@ -168,6 +167,9 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                                         c_to_edit.defined = False
                                         c_to_edit.save()
                                         break
+                        elif serializer.validated_data["defined"] is False and \
+                            Card.objects.filter(user_id=user_id, defined=True).count() == 0:
+                            serializer.validated_data["defined"] = True
 
                         Card.objects.create(user_id=user_id,
                                             card_id=uuid.uuid4(),
@@ -196,6 +198,10 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
             template = "add_Card.html"
             return render(request, template)
 
+        try:
+            del request.session["error"]
+        except KeyError:
+            pass
         request.session["payments"] = True
         request.session["cancel"] = request.META.get("HTTP_REFERER")
         template = "add_Card.html"

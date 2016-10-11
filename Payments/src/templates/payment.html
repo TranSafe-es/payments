@@ -4,108 +4,125 @@
     <!-- Bootstrap Core CSS -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <script>
-        function changeValue(){
+        function changeValue() {
             var check = document.getElementById("checkbox");
             var defined = document.getElementById("defined");
-            if(defined.value == "True"){
+            if (defined.value == "True") {
                 defined.value = "False";
-            }else{
+            } else {
                 defined.value = "True";
             }
         }
-        function changeAction(){
+        function changeAction() {
             var card_id_selected = document.getElementById("card_id_selected");
             card_id_selected.value = document.getElementById("card_id").value;
         }
 
-        function submit(){
+        function submit() {
             document.getElementById("form2").submit();
         }
 
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="row-fluid">
-              <div id="legend">
-                <legend class="">Confirm Payment</legend>
-              </div>
+<div class="container">
+    <div class="row-fluid">
+        <div id="legend">
+            <legend class="">Confirm Payment</legend>
+        </div>
         <div>
-              <!-- Name -->
-                <div class="control-group">
-                    <label style="min-height: 100%" class="span2">Description:</label>  {{ request.session.description }}
-                </div>
+            <!-- Name -->
+            <div class="control-group">
+                <label style="min-height: 100%" class="span2">Description:</label> {{ request.session.description }}
+            </div>
 
-                <div class="control-group">
-                 <label style="min-height: 100%" class="span2">Amount:</label>  {{ request.session.amount }} €
-                </div>
+            <div class="control-group">
+                <label style="min-height: 100%" class="span2">Amount:</label> {{ request.session.amount }} €
+            </div>
             <form id="form1" method="post">
 
-              <div id="cards">
+                <div id="cards">
                     <div class="control-group">
                         <label for="card_id" class="span2">Choose the card:</label>
-                            <div>
-                                <select id="card_id" onchange="changeAction()">
-                                    {% for c in request.session.card %}
-                                        <option value="{{ c.card_id }}">{{ c.number }}</option>
-                                    {%  endfor  %}
-                                    <input type="hidden" id="cache_id" name="cache_id" class="span2">
-                                    <input type="hidden" id="payments" name="payments" value="True" class="span2">
+                        <div>
+                            <select id="card_id" onchange="changeAction()">
+                                {% for c in request.session.card %}
+                                    <option value="{{ c.card_id }}">{{ c.number }}</option>
+                                {% endfor %}
+                                <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                                <input type="hidden" id="payments" name="payments" value="True" class="span2">
 
 
-                                    <input style="vertical-align: top" type="submit" id="add_card" class="btn btn-info" value="Add Card">
-                                </select>
+                                <input style="vertical-align: top" type="submit" id="add_card" class="btn btn-info"
+                                       value="Add Card">
+                            </select>
 
 
-                            </div>
+                        </div>
                     </div>
                 </div>
-                                            </form>
-
-                <div id="alert" class="alert alert-danger">
-                    {{ request.session.error }}
-                </div>
-                <input value="{{ request.session.error }}" id="error" type="hidden">
-</div>
-            <div class="control-group">
-                <form id="form2" method="post">
+            </form>
+            <form id="form3" method="post">
+                <div id="alert">
+                    <div class="alert alert-danger span5">
+                        {{ request.session.error }}
+                    </div>
+                    <br><br><br>
                     <input type="hidden" id="cache_id" name="cache_id" class="span2">
-                    <input type="hidden" id="card_id_selected" name="card_id" class="span2">
-                    <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'" class="btn btn-danger" value="Cancel">
-                    <input type="button" id="button" class="btn btn-success" value="Confirm Payment" onclick="submit();return confirm('Are you sure that you want to confirm this payment?')">
+                    <input type="hidden" id="payments" name="payments" value="True" class="span2">
+                    <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'"
+                       class="btn btn-danger" value="Cancel">
+                    <input style="vertical-align: top" type="submit" id="add_card" class="btn btn-info"
+                                       value="Add Card">
 
-                </form>
-              </div>
+                </div>
+            </form>
+
+                <input value="{{ request.session.error }}" id="error" type="hidden">
 
         </div>
+        <div id="confirm" class="control-group">
+            <form id="form2" method="post">
+                <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                <input type="hidden" id="card_id_selected" name="card_id" class="span2">
+                <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'"
+                       class="btn btn-danger" value="Cancel">
+                <input type="button" id="button" class="btn btn-success" value="Confirm Payment"
+                       onclick="submit();return confirm('Are you sure that you want to confirm this payment?')">
+
+            </form>
+        </div>
+
     </div>
-    <script type="text/javascript">
-        window.onload = function(){
-            var cache_id = document.getElementById("cache_id");
-            cache_id.value = window.location.href.split("/")[window.location.href.split("/").length -2];
-            var form = document.getElementById("form2");
-            form.action = "/api/v1/payments/confirm_payment/" + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
-            var form1 = document.getElementById("form1");
-            form1.action = "/api/v1/cards/add_card/" + window.location.href.split("/")[window.location.href.split("/").length -2] + "/";
+</div>
+<script type="text/javascript">
+    window.onload = function () {
+        var cache_id = document.getElementById("cache_id");
+        cache_id.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
+        var form = document.getElementById("form2");
+        form.action = "/api/v1/payments/confirm_payment/" + window.location.href.split("/")[window.location.href.split("/").length - 2] + "/";
+        var form1 = document.getElementById("form1");
+        form1.action = "/api/v1/cards/add_card/" + window.location.href.split("/")[window.location.href.split("/").length - 2] + "/";
+        var form3 = document.getElementById("form3");
+        form3.action = "/api/v1/cards/add_card/" + window.location.href.split("/")[window.location.href.split("/").length - 2] + "/";
 
-            var error = document.getElementById("error");
-            var card_id_selected = document.getElementById("card_id_selected");
-            card_id_selected.value = document.getElementById("card_id").value;
-            if(error.value == ""){
-                document.getElementById("cards").style.display = "block";
-                document.getElementById("alert").style.display = "none";
-                document.getElementById("button").style.display = "inline";
-                document.getElementById("cancel").value = "Cancel";
+        var error = document.getElementById("error");
+        var card_id_selected = document.getElementById("card_id_selected");
+        card_id_selected.value = document.getElementById("card_id").value;
+        if (error.value == "") {
+            document.getElementById("confirm").style.display = "block";
+            document.getElementById("cards").style.display = "block";
+            document.getElementById("alert").style.display = "none";
+            document.getElementById("button").style.display = "inline";
 
-            }else{
-                document.getElementById("alert").style.display = "block";
-                document.getElementById("cards").style.display = "none";
-                document.getElementById("button").style.display = "none";
-                document.getElementById("cancel").value = "Close";
-                document.getElementById("cancel").style.float = "right"
-            }
+        } else {
+            document.getElementById("confirm").style.display = "none";
+            document.getElementById("alert").style.display = "block";
+            document.getElementById("cards").style.display = "none";
+            document.getElementById("button").style.display = "none";
         }
+    }
 
-    </script>
+</script>
 </body>
 </html>

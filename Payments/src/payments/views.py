@@ -6,7 +6,7 @@ import uuid
 import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
-from django.http import HttpResponse
+from rest_framework.response import Response
 
 
 class InitPaymentView(views.APIView):
@@ -17,7 +17,7 @@ class InitPaymentView(views.APIView):
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
         serializer = PaymentSerializer(data=kwargs)
 
-        #serializer = UserIDSerializer(data=request.data)
+        #  serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
             #  data = {"user_id1": serializer.validated_data["user_id1"],
             #        "user_id2": serializer.validated_data["user_id2"],
@@ -28,16 +28,22 @@ class InitPaymentView(views.APIView):
                     "transaction_id": kwargs["transaction_id"], "amount": kwargs["amount"],
                     "description": kwargs["description"], "url": "http://www.google.pt"}
 
-            cache.set(cache_id, data)
-            for key in request.session.keys():
-                del request.session[key]
+            if Card.objects.filter(user_id=kwargs["user_id2"]).count() > 0:
+                cache.set(cache_id, data)
 
-            return redirect('/api/v1/payments/confirm_payment/' + cache_id + "/")
+                for key in request.session.keys():
+                    del request.session[key]
 
+                return redirect('/api/v1/payments/confirm_payment/' + cache_id + "/")
+
+            else:
+                return Response({'status': 'Without Cards',
+                                 'message': 'The user doesn\'t have an associated card to receive the money'},
+                                status=status.HTTP_401_UNAUTHORIZED)
         else:
-            return HttpResponse({'status': 'Bad Request',
-                                 'message': 'Unexpected error'},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'Bad Request',
+                             'message': 'Unexpected error'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -68,9 +74,9 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
 
             return render(request, template)
 
-        return HttpResponse({'status': 'Bad Request',
-                             'message': 'Unexpected error'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'Bad Request',
+                         'message': 'Unexpected error'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, **kwargs):
         serializer = PaymentSerializer(data=request.data)
