@@ -1,34 +1,34 @@
 from django.shortcuts import render, redirect
-from .models import Card
-from .serializers import PaymentSerializer
+from .models import Card, Payment
+from .serializers import PaymentSerializer, CreatePaymentSerializer, CompleteRefundPaymentSerializer
 from rest_framework import viewsets, status, mixins, views
 import uuid
-import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
+from decimal import Decimal
 
 
 class InitPaymentView(views.APIView):
 
     @staticmethod
-    def get(request, *args, **kwargs):
+    def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        serializer = PaymentSerializer(data=kwargs)
+        #  serializer = PaymentSerializer(data=kwargs)
 
-        #  serializer = PaymentSerializer(data=request.data)
+        serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
-            #  data = {"user_id1": serializer.validated_data["user_id1"],
-            #        "user_id2": serializer.validated_data["user_id2"],
-            #        "transaction_id": serializer.validated_data["transaction_id"],
-            #        "amount": serializer.validated_data["amount"],
-            #        "description": serializer.validated_data["description"], "url": "http://www.google.pt"}
-            data = {"user_id": kwargs["user_id1"], "user_id2": kwargs["user_id2"],
-                    "transaction_id": kwargs["transaction_id"], "amount": kwargs["amount"],
-                    "description": kwargs["description"], "url": "http://www.google.pt"}
+            data = {"user_id1": serializer.validated_data["user_id1"],
+                    "user_id2": serializer.validated_data["user_id2"],
+                    "transaction_id": serializer.validated_data["transaction_id"],
+                    "amount": serializer.validated_data["amount"],
+                    "description": serializer.validated_data["description"], "url": request.META.get("HTTP_REFERER")}
+            #  data = {"user_id": kwargs["user_id1"], "user_id2": kwargs["user_id2"],
+            #       "transaction_id": kwargs["transaction_id"], "amount": kwargs["amount"],
+            #       "description": kwargs["description"], "url": "http://www.google.pt"}
 
-            if Card.objects.filter(user_id=kwargs["user_id2"]).count() > 0:
+            if Card.objects.filter(user_id=serializer.validated_data["user_id2"]).count() > 0:
                 cache.set(cache_id, data)
 
                 for key in request.session.keys():
@@ -78,19 +78,106 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                          'message': 'Unexpected error'},
                         status=status.HTTP_400_BAD_REQUEST)
 
+    @never_cache
     def create(self, request, **kwargs):
-        serializer = PaymentSerializer(data=request.data)
+        serializer = CreatePaymentSerializer(data=request.data)
         for key in request.session.keys():
             del request.session[key]
-        if cache.get(request.data["cache_id"]) is not None:
-            request.session["cancel"] = cache.get(request.data["cache_id"])["url"]
-            user_id = cache.get(request.data["cache_id"])["user_id"]
+        if serializer.is_valid():
+            if cache.get(serializer.validated_data["cache_id"]) is not None:
+                c = cache.get(serializer.validated_data["cache_id"])
+                user_id = c["user_id"]
+                user_id2 = c["user_id2"]
+                amount = c["amount"]
+                transaction_id = c["transaction_id"]
+                description = c["description"]
+                url = c["url"]
+                request.session["cancel"] = url
+                request.session["amount"] = amount
+                request.session["description"] = description
+                cards = []
+                for c in Card.objects.all():
+                    if c.user_id == user_id:
+                        card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:]}
+                        cards.append(card_data)
 
-            for error in serializer.errors:
-                s = error + "_error"
-                request.session[s] = str(serializer.errors[error][0])
+                request.session["card"] = []
+                for c in cards:
+                    request.session["card"].append({'card_id': c["card_id"], 'number': c["number"]})
 
-        for data in request.data:
-            request.session[data] = str(request.data[data])
+                if Payment.objects.filter(transaction_id=transaction_id).count() < 1:
+                    if Card.objects.filter(user_id=user_id, card_id=serializer.validated_data["card_id"]).count() > 0:
+                        c1 = Card.objects.get(card_id=serializer.validated_data["card_id"])
+                        if c1.total < Decimal(amount):
+                            request.session["error_confirm"] = "This card doesn\'t have money to confirm the payment"
+                            template = "payment.html"
+                            return render(request, template)
+                        c1.total = c1.total - Decimal(amount)
+                        c1.save()
+                        c2 = Card.objects.get(user_id=user_id2, defined=True)
+                        Payment.objects.create(user_id1=user_id, user_id2=user_id2, card_1=c1, card_2=c2, amount=amount,
+                                               description=description, transaction_id=transaction_id)
+
+                        return redirect(request.session["cancel"])
+                else:
+                    request.session["error_confirm"] = "This transaction already exists"
+                    template = "payment.html"
+                    return render(request, template)
+
+        request.session["error_confirm"] = "It was impossible to confirm this payment"
         template = "payment.html"
         return render(request, template)
+
+
+class CompletePaymentView(views.APIView):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        serializer = CompleteRefundPaymentSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"], state="Pending").count() == 1:
+                p = Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"])
+                c = p.card_2
+                c.total = c.total + p.amount
+                p.state("Completed")
+                p.save()
+                c.save()
+
+                return Response({'status': 'Payment Completed',
+                                 'message': 'The payment has been completed successfully'},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'Complete Payment Error',
+                                 'message': 'This transaction can\'t be completed'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response({'status': 'Bad Request',
+                        'message': 'Unexpected error'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+
+class RefundPaymentView(views.APIView):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        serializer = CompleteRefundPaymentSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"], state="Pending").count() == 1:
+                p = Payment.objects.get(transaction_id=serializer.validated_data["transaction_id"])
+                c = p.card_1
+                c.total = c.total + p.amount
+                p.state = "Refunded"
+                p.save()
+                c.save()
+
+                return Response({'status': 'Payment Refunded',
+                                 'message': 'The payment has been refunded successfully'},
+                                status=status.HTTP_200_OK)
+
+            else:
+                return Response({'status': 'Refund Error',
+                                 'message': 'This transaction can\'t be refunded'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'status': 'Bad Request',
+                        'message': 'Unexpected error'},
+                        status=status.HTTP_400_BAD_REQUEST)

@@ -11,15 +11,15 @@ from rest_framework.response import Response
 
 class InitAddView(views.APIView):
     @staticmethod
-    def get(request, *args, **kwargs):
+    def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        serializer = UserIDSerializer(data=kwargs)
+        #  serializer = UserIDSerializer(data=kwargs)
 
-        # serializer = UserIDSerializer(data=request.data)
+        serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            # data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
-            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            #  data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
             for key in request.session.keys():
@@ -33,15 +33,15 @@ class InitAddView(views.APIView):
 
 class InitUpdateView(views.APIView):
     @staticmethod
-    def get(request, *args, **kwargs):
+    def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
-        serializer = UserIDSerializer(data=kwargs)
+        #  serializer = UserIDSerializer(data=kwargs)
 
-        # serializer = UserIDSerializer(data=request.data)
+        serializer = UserIDSerializer(data=request.data)
         if serializer.is_valid():
-            # data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
-            data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
+            data = {"user_id": serializer.validated_data["user_id"], "url": request.META.get("HTTP_REFERER")}
+            #  data = {"user_id": kwargs["user_id"], "url": "http://www.google.pt"}
 
             cache.set(cache_id, data)
             for key in request.session.keys():
@@ -123,7 +123,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                 else:
                     request.session["defined"] = False
                 if serializer.is_valid():
-                    if Card.objects.filter(user_id=user_id, number=serializer.validated_data["number"]).count() is 1:
+                    if Card.objects.filter(number=serializer.validated_data["number"]).count() > 0:
 
                         request.session["error"] = "This card already exists"
                         for data in request.data:
@@ -138,8 +138,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
                         if not len(serializer.validated_data["cvv2"]) == 3:
                             errors = True
                             request.session["cvv2_error"] = "The CVV value needs 3 digits"
-                        if serializer.validated_data["expire_month"] < 1 or serializer.validated_data[
-                            "expire_month"] > 12:
+                        if serializer.validated_data["expire_month"] < 1 or serializer.validated_data["expire_month"] > 12:
                             errors = True
                             request.session["expire_month_error"] = "Month should be between 1 and 12"
 

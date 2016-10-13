@@ -18,10 +18,6 @@
             card_id_selected.value = document.getElementById("card_id").value;
         }
 
-        function submit() {
-            document.getElementById("form2").submit();
-        }
-
     </script>
 </head>
 <body>
@@ -31,6 +27,11 @@
             <legend class="">Confirm Payment</legend>
         </div>
         <div>
+            {% if request.session.error_confirm %}
+                <div class="alert alert-danger">
+                    {{ request.session.error_confirm }}
+                </div>
+            {% endif %}
             <!-- Name -->
             <div class="control-group">
                 <label style="min-height: 100%" class="span2">Description:</label> {{ request.session.description }}
@@ -49,7 +50,7 @@
                                 {% for c in request.session.card %}
                                     <option value="{{ c.card_id }}">{{ c.number }}</option>
                                 {% endfor %}
-                                <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                                <input type="hidden" id="cache_id1" name="cache_id" class="span2">
                                 <input type="hidden" id="payments" name="payments" value="True" class="span2">
 
 
@@ -68,7 +69,7 @@
                         {{ request.session.error }}
                     </div>
                     <br><br><br>
-                    <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                    <input type="hidden" id="cache_id3" name="cache_id" class="span2">
                     <input type="hidden" id="payments" name="payments" value="True" class="span2">
                     <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'"
                        class="btn btn-danger" value="Cancel">
@@ -83,12 +84,12 @@
         </div>
         <div id="confirm" class="control-group">
             <form id="form2" method="post">
-                <input type="hidden" id="cache_id" name="cache_id" class="span2">
+                <input type="hidden" id="cache_id2" name="cache_id" class="span2">
                 <input type="hidden" id="card_id_selected" name="card_id" class="span2">
                 <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'"
                        class="btn btn-danger" value="Cancel">
-                <input type="button" id="button" class="btn btn-success" value="Confirm Payment"
-                       onclick="submit();return confirm('Are you sure that you want to confirm this payment?')">
+                <input type="submit" id="button" class="btn btn-success" value="Confirm Payment"
+                       onclick="return confirm('Are you sure that you want to confirm this payment?')">
 
             </form>
         </div>
@@ -97,8 +98,12 @@
 </div>
 <script type="text/javascript">
     window.onload = function () {
-        var cache_id = document.getElementById("cache_id");
-        cache_id.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
+        var cache_id1 = document.getElementById("cache_id1");
+        cache_id1.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
+        var cache_id2 = document.getElementById("cache_id2");
+        cache_id2.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
+        var cache_id3 = document.getElementById("cache_id3");
+        cache_id3.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
         var form = document.getElementById("form2");
         form.action = "/api/v1/payments/confirm_payment/" + window.location.href.split("/")[window.location.href.split("/").length - 2] + "/";
         var form1 = document.getElementById("form1");
