@@ -15,80 +15,19 @@ basePath: /api/v1
 produces:
   - application/json
 paths:
-  /payments_create_interface:
-    get:
-      summary: Get HTML page to confirm payment.
-      description: |
-        This payments endpoint method returns all the information about a payment that a user defined by a uuid has associated to him
-      parameters:
-        - name: uuid1
-          description: The uuid of user1
-          required: true
-          type: string
-          in: header
-        - name: uuid2
-          description: The uuid of user2
-          required: true
-          type: string
-          in: header
-        - name: user1_name
-          description: The user1 name
-          required: true
-          type: string
-          in: header
-        - name: user2_name
-          description: The user2 name
-          required: true
-          type: string
-          in: header
-        - name: amount
-          description: The amount of money to pay
-          required: true
-          type: number
-          in: header
-        - name: description
-          description: Description of the transaction
-          required: true
-          type: string
-          in: header
-      tags:
-        - Payments
-      responses:
-        200:
-          description: Retunrs an html page.
-        default:
-          description: Unexpected Error.
-  /payments:
-    get:
-      summary: Get payments per user.
-      description: |
-        This payments endpoint method returns all payments that a user defined by a uuid has associated to him
-      parameters:
-        - name: uuid
-          description: The user uuid
-          required: true
-          type: string
-          in: header
-      tags:
-        - Payments
-      responses:
-        200:
-          description: A json array with all of the user payments
-        default:
-          description: Unexpected error
-  
+  /payments/create:
     post:
       summary: Create a new payment for an user
       description: |
         This payments endpoint method is used to create a new payment to the user specified by the uuid.
       parameters:
-        - name: buyer_uuid
-          description: The buyer uuid
+        - name: user_id1
+          description: The user_id1 uuid
           required: true
           type: string
           in: header
-        - name: seller_uuid
-          description: The seller uuid
+        - name: user_id2
+          description: The user_id2 uuid
           required: true
           type: string
           in: header
@@ -110,26 +49,19 @@ paths:
       tags:
         - Payments
       responses:
-        200:
-          description: Returns the paymentID
-        401:
-          description: Client doesn't have enough money to pay.
+        302:
+          description: Redirect to the page to confirm the payment
         default:
           description: Unexpected error
     
-  /payments/{paymentID}:
-    get:
-      summary: Get payment by ID.
+  /payments/complete:
+    post:
+      summary: Complete payment.
       description: |
-        This payments endpoint method returns all the information about a payment
+        This payments endpoint method completes the payment
       parameters:
-        - name: paymentID
-          description: The payment id
-          required: true
-          type: string
-          in: path
-        - name: user_uuid
-          description: Uuid of the logged user
+        - name: transaction_id
+          description: The transaction id
           required: true
           type: string
           in: header
@@ -137,29 +69,20 @@ paths:
         - Payments
       responses:
         200:
-          description: A json array with the information of a payment
+          description: The payment has been completed succesfully
         401:
-          description: The payment ID doesn't correspond to user's uuid.
+          description: This transaction can't be completed 
         default:
           description: Unexpected error
           
-    put:
-      summary: Update payment state.
+  /payments/refund:
+    post:
+      summary: Refund payment
       description: |
-        This payments endpoint method updates all the information about a payment
+        This payments endpoint method refunds the payment
       parameters:
-        - name: paymentID
-          description: The payment id
-          required: true
-          type: string
-          in: path
-        - name: user_uuid
-          description: Uuid of the logged user
-          required: true
-          type: string
-          in: header
-        - name: operation
-          description: Operation to be done, finish the payment or refund the buyer. The state can be Pending, Finished or Refunded.
+        - name: transaction_id
+          description: The transaction id
           required: true
           type: string
           in: header
@@ -167,30 +90,12 @@ paths:
         - Payments
       responses:
         200:
-          description: Payment state have been updated successfully.
+          description: The payment has been refunded succesfully
         401:
-          description: The payment ID doesn't correspond to user's uuid.
+          description: This transaction can't be refunded 
         default:
           description: Unexpected error
           
-  /sells:
-    get:
-      summary: Get sells per user.
-      description: |
-        This sells endpoint method returns all sells that a user defined by a uuid has associated to him, either present or
-      parameters:
-        - name: uuid
-          description: The user uuid
-          required: true
-          type: string
-          in: header
-      tags:
-        - Sells
-      responses:
-        200:
-          description: A json array with all of the user sells
-        default:
-          description: Unexpected error
   
   /cards/create/:
     post:
