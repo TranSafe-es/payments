@@ -403,3 +403,36 @@ class DeleteCard(views.APIView):
             request.session["delete_error"] = "Unexpected Error."
             template = "delete_Card.html"
             return render(request, template)
+
+
+class MyCardsView(views.APIView):
+    @staticmethod
+    @never_cache
+    def get(request, *args, **kwargs):
+        template = "mycards.html"
+        serializer = UserIDSerializer(data=kwargs)
+        for key in request.session.keys():
+                del request.session[key]
+        if serializer.is_valid():
+            cards = []
+            user_id = serializer.validated_data["user_id"]
+            for c in Card.objects.all():
+                if c.user_id == user_id:
+                    card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:],
+                                 'expire_month': c.expire_month, 'expire_year': c.expire_year, 'total': "%.2f" % c.total}
+                    cards.append(card_data)
+
+            request.session["card"] = []
+            for c in cards:
+                request.session["card"].append({'card_id': c["card_id"], 'number': c["number"],
+                                                'expire_month': c["expire_month"], 'expire_year': c["expire_year"],
+                                                'total': c["total"]})
+            if len(cards) == 0:
+                request.session["error"] = "This user doesn't have any cards"
+            request.session["cancel"] = request.META.get("HTTP_REFERER")
+
+            return render(request, template)
+
+        return Response({'status': 'Bad Request',
+                         'message': 'Unexpected error'},
+                        status=status.HTTP_400_BAD_REQUEST)
