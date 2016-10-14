@@ -154,6 +154,24 @@ paths:
         default:
           description: Unexpected error
   
+  /cards/mycards/{user_id}:
+    get:
+      summary: Get URL to see my cards
+      description: |
+        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can see his cards
+      parameters:
+        - name: user_id
+          description: The user uuid
+          required: true
+          type: string
+          in: path
+      tags:
+        - Cards
+      responses:
+        302:
+          description: Redirect URL.
+        default:
+          description: Unexpected error
   
  
           
