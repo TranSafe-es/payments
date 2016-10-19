@@ -25,27 +25,27 @@ paths:
           description: The user_id1 uuid
           required: true
           type: string
-          in: header
+          in: formData
         - name: user_id2
           description: The user_id2 uuid
           required: true
           type: string
-          in: header
+          in: formData
         - name: transaction_id
           description: Transaction id
           required: true
           type: string
-          in: header
+          in: formData
         - name: amount
           description: The amount of money to pay
           required: true
           type: number
-          in: header
+          in: formData
         - name: description
           description: Description of the product
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Payments
       responses:
@@ -64,7 +64,7 @@ paths:
           description: The transaction id
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Payments
       responses:
@@ -85,7 +85,7 @@ paths:
           description: The transaction id
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Payments
       responses:
@@ -107,7 +107,7 @@ paths:
           description: The user uuid
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Cards
       responses:
@@ -126,7 +126,7 @@ paths:
           description: The user uuid
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Cards
       responses:
@@ -145,7 +145,7 @@ paths:
           description: The user uuid
           required: true
           type: string
-          in: header
+          in: formData
       tags:
         - Cards
       responses:

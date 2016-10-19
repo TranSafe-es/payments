@@ -52,12 +52,12 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
     def retrieve(self, request, *args, **kwargs):
         template = "payment.html"
         for key in request.session.keys():
-                del request.session[key]
+            del request.session[key]
         if cache.get(kwargs["cache_id"]) is not None:
             c = cache.get(kwargs["cache_id"])
-            user_id = c["user_id"]
+            user_id = c["user_id1"]
             request.session["description"] = c["description"]
-            request.session["amount"] = c["amount"]
+            request.session["amount"] = str(c["amount"])
             request.session["cancel"] = c["url"]
             if Card.objects.filter(user_id=user_id).count() == 0:
                 request.session["error"] = "Please associate a card to your account"
