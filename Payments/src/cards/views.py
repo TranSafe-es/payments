@@ -12,8 +12,8 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 class InitAddView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -36,8 +36,8 @@ class InitAddView(views.APIView):
 
 class InitUpdateView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -60,8 +60,8 @@ class InitUpdateView(views.APIView):
 
 class InitDeleteView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -219,8 +219,8 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
 
 class UpdateCardView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         template = "update_Card_choose.html"
@@ -247,8 +247,8 @@ class UpdateCardView(views.APIView):
 
 class UpdateCard(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
         if request.POST["choose"] == "True":
             template = "update_Card.html"
@@ -360,8 +360,8 @@ class UpdateCard(views.APIView):
 
 class DeleteCardView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         template = "delete_Card.html"
@@ -387,8 +387,8 @@ class DeleteCardView(views.APIView):
 
 class DeleteCard(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
         if cache.get(request.data["cache_id"]) is not None:
@@ -425,8 +425,8 @@ class DeleteCard(views.APIView):
 
 class MyCardsView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         template = "mycards.html"

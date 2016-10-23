@@ -10,11 +10,10 @@ from decimal import Decimal
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 
-
 class InitPaymentView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -136,8 +135,8 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
 
 class CompletePaymentView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
 
@@ -165,8 +164,8 @@ class CompletePaymentView(views.APIView):
 
 class RefundPaymentView(views.APIView):
 
-    @xframe_options_exempt
     @staticmethod
+    @xframe_options_exempt
     def post(request, *args, **kwargs):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
 
