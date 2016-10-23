@@ -7,9 +7,12 @@ import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 
 class InitAddView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
 
@@ -32,6 +35,8 @@ class InitAddView(views.APIView):
 
 
 class InitUpdateView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
 
@@ -54,6 +59,8 @@ class InitUpdateView(views.APIView):
 
 
 class InitDeleteView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
 
@@ -77,6 +84,8 @@ class InitDeleteView(views.APIView):
 
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
+
+    @xframe_options_exempt
     @never_cache
     def retrieve(self, request, *args, **kwargs):
 
@@ -97,6 +106,7 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
             request.session["defined"] = False
         return render(request, template)
 
+    @xframe_options_exempt
     @never_cache
     def create(self, request, **kwargs):
         if "payments" not in request.data:
@@ -208,6 +218,8 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
 
 
 class UpdateCardView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     @never_cache
     def get(request, *args, **kwargs):
@@ -234,6 +246,8 @@ class UpdateCardView(views.APIView):
 
 
 class UpdateCard(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
         if request.POST["choose"] == "True":
@@ -345,6 +359,8 @@ class UpdateCard(views.APIView):
 
 
 class DeleteCardView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     @never_cache
     def get(request, *args, **kwargs):
@@ -370,6 +386,8 @@ class DeleteCardView(views.APIView):
 
 
 class DeleteCard(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
@@ -406,6 +424,8 @@ class DeleteCard(views.APIView):
 
 
 class MyCardsView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     @never_cache
     def get(request, *args, **kwargs):

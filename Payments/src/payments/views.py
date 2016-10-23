@@ -7,10 +7,13 @@ from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
 from decimal import Decimal
+from django.views.decorators.clickjacking import xframe_options_exempt
+
 
 
 class InitPaymentView(views.APIView):
 
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
 
@@ -48,6 +51,7 @@ class InitPaymentView(views.APIView):
 
 class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
 
+    @xframe_options_exempt
     @never_cache
     def retrieve(self, request, *args, **kwargs):
         template = "payment.html"
@@ -78,6 +82,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                          'message': 'Unexpected error'},
                         status=status.HTTP_400_BAD_REQUEST)
 
+    @xframe_options_exempt
     @never_cache
     def create(self, request, **kwargs):
         serializer = CreatePaymentSerializer(data=request.data)
@@ -130,6 +135,8 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
 
 
 class CompletePaymentView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
@@ -157,6 +164,8 @@ class CompletePaymentView(views.APIView):
 
 
 class RefundPaymentView(views.APIView):
+
+    @xframe_options_exempt
     @staticmethod
     def post(request, *args, **kwargs):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
