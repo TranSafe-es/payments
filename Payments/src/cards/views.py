@@ -439,14 +439,13 @@ class MyCardsView(views.APIView):
             for c in Card.objects.all():
                 if c.user_id == user_id:
                     card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:],
-                                 'expire_month': c.expire_month, 'expire_year': c.expire_year, 'total': "%.2f" % c.total}
+                                 'expire_month': c.expire_month, 'expire_year': c.expire_year}
                     cards.append(card_data)
 
             request.session["card"] = []
             for c in cards:
                 request.session["card"].append({'card_id': c["card_id"], 'number': c["number"],
-                                                'expire_month': c["expire_month"], 'expire_year': c["expire_year"],
-                                                'total': c["total"]})
+                                                'expire_month': c["expire_month"], 'expire_year': c["expire_year"]})
             if len(cards) == 0:
                 request.session["error"] = "This user doesn't have any cards"
             request.session["cancel"] = request.META.get("HTTP_REFERER")
