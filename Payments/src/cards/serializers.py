@@ -38,11 +38,11 @@ class MyCardsSerializer(serializers.ModelSerializer):
 
 
 class ListCardsSerializer(serializers.ModelSerializer):
-    cache_id = serializers.CharField(max_length=128, required=True)
+    number = serializers.CharField(max_length=128)
 
     class Meta:
         model = Card
-        fields = ('cache_id',)
+        fields = ('number', 'expire_month', 'expire_year')
 
 
 class UserIDSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Card
-from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, UserIDSerializer
+from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, UserIDSerializer, ListCardsSerializer
 from rest_framework import viewsets, status, mixins, views
 import uuid
 import datetime
@@ -429,28 +429,42 @@ class MyCardsView(views.APIView):
     @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
-        template = "mycards.html"
         serializer = UserIDSerializer(data=kwargs)
         for key in request.session.keys():
-                del request.session[key]
+            del request.session[key]
         if serializer.is_valid():
-            cards = []
-            user_id = serializer.validated_data["user_id"]
-            for c in Card.objects.all():
-                if c.user_id == user_id:
-                    card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:],
-                                 'expire_month': c.expire_month, 'expire_year': c.expire_year}
-                    cards.append(card_data)
+            if "html" in request.content_type:
+                template = "mycards.html"
 
-            request.session["card"] = []
-            for c in cards:
-                request.session["card"].append({'card_id': c["card_id"], 'number': c["number"],
-                                                'expire_month': c["expire_month"], 'expire_year': c["expire_year"]})
-            if len(cards) == 0:
-                request.session["error"] = "This user doesn't have any cards"
-            request.session["cancel"] = request.META.get("HTTP_REFERER")
+                cards = []
+                user_id = serializer.validated_data["user_id"]
+                for c in Card.objects.all():
+                    if c.user_id == user_id:
+                        card_data = {'card_id': c.card_id, 'number': "************" + c.number[-4:],
+                                     'expire_month': c.expire_month, 'expire_year': c.expire_year}
+                        cards.append(card_data)
 
-            return render(request, template)
+                request.session["card"] = []
+                for c in cards:
+                    request.session["card"].append({'card_id': c["card_id"], 'number': c["number"],
+                                                    'expire_month': c["expire_month"], 'expire_year': c["expire_year"]})
+                if len(cards) == 0:
+                    request.session["error"] = "This user doesn't have any cards"
+                request.session["cancel"] = request.META.get("HTTP_REFERER")
+
+                return render(request, template)
+
+            elif "json" in request.content_type:
+                cards = []
+                user_id = serializer.validated_data["user_id"]
+                for c in Card.objects.all():
+                    if c.user_id == user_id:
+                        card_data = {'number': "************" + c.number[-4:],
+                                     'expire_month': c.expire_month, 'expire_year': c.expire_year}
+                        cards.append(card_data)
+                serializer1 = ListCardsSerializer(data=cards, many=True)
+                if serializer1.is_valid():
+                    return Response(serializer1.data, status=status.HTTP_200_OK)
 
         return Response({'status': 'Bad Request',
                          'message': 'Unexpected error'},
