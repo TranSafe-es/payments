@@ -344,9 +344,10 @@ class UpdateCard(views.APIView):
                                 pass
                             c.save()
                             for key in request.session.keys():
-                                del request.session[key]
+                                if key != "cancel":
+                                    del request.session[key]
 
-                            return redirect('/api/v1/cards/edit_card/' + serializer.validated_data["cache_id"] + "/")
+                            return redirect(request.session["cancel"])
 
                 for error in serializer.errors:
                     s = error + "_error"
@@ -414,9 +415,10 @@ class DeleteCard(views.APIView):
                                     break
                     c.delete()
                     for key in request.session.keys():
-                        del request.session[key]
+                        if key != "cancel":
+                            del request.session[key]
 
-                    return redirect('/api/v1/cards/delete_card/' + serializer.validated_data["cache_id"] + "/")
+                    return redirect(request.session["cancel"])
 
             request.session["delete_error"] = "Unexpected Error."
             template = "delete_Card.html"
@@ -432,8 +434,13 @@ class MyCardsView(views.APIView):
         serializer = UserIDSerializer(data=kwargs)
         for key in request.session.keys():
             del request.session[key]
-        if serializer.is_valid():
 
+        ref = request.META.get("HTTP_REFERER").split("/")[2]
+
+        if request.META.get("HTTP_HOST") != ref:
+            request.session["close"] = request.META.get("HTTP_REFERER")
+
+        if serializer.is_valid():
             if "json" in request.content_type:
                 cards = []
                 user_id = serializer.validated_data["user_id"]
@@ -463,7 +470,6 @@ class MyCardsView(views.APIView):
                                                     'expire_year': c["expire_year"]})
                 if len(cards) == 0:
                     request.session["error"] = "This user doesn't have any cards"
-                request.session["cancel"] = request.META.get("HTTP_REFERER")
 
                 return render(request, template)
 

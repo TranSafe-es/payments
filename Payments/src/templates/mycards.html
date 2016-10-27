@@ -37,6 +37,44 @@
               </table>
             {% endif %}
             </div>
+        <form id="form1" method="post" style="float: right" action="/api/v1/cards/create/" class="span1">
+                <input type="hidden" id="user_id1" name="user_id" class="span2">
+
+                <input style="width: 70px; vertical-align: top" type="submit" id="add_card" class="btn btn-success"
+                                   value="Add">
+
+            </form>
+        <form id="form2" method="post" style="float: right" action="/api/v1/cards/update/" class="span1">
+
+
+                <input type="hidden" id="user_id2" name="user_id" class="span2">
+
+                <input style="vertical-align: top" type="submit" id="add_card" class="btn btn-info"
+                                   value="Update">
+
+
+            </form>
+        <form id="form3" method="post" style="float: right" action="/api/v1/cards/delete/" class="span1">
+
+                <input type="hidden" id="user_id3" name="user_id" class="span2">
+
+                <input style="vertical-align: top" type="submit" id="delete_card" class="btn btn-danger"
+                                   value="Delete">
+
+            </form>
+        <button type="button" id="cancel" style="float: left" onclick="location.href= '{{ request.session.close }}'"
+                       class="btn btn-warning" value="Close">Close</button>
     </div>
+<script type="text/javascript">
+    window.onload = function () {
+        var user_id1 = document.getElementById("user_id1");
+        var user_id2 = document.getElementById("user_id2");
+        var user_id3 = document.getElementById("user_id3");
+        user_id1.value = window.location.href.split("/")[window.location.href.split("/").length - 2];
+        user_id2.value = user_id1.value;
+        user_id3.value = user_id1.value;
+    }
+
+</script>
 </body>
 </html>
