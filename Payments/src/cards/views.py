@@ -446,7 +446,11 @@ class MyCardsView(views.APIView):
                         cards.append(card_data)
                 serializer1 = ListCardsSerializer(data=cards, many=True)
                 if serializer1.is_valid():
-                    return Response(serializer1.data, status=status.HTTP_200_OK)
+                    if Card.objects.filter(user_id=user_id).count() > 0:
+                        return Response(serializer1.data, status=status.HTTP_200_OK)
+                    else:
+                        return Response({"message": "The user doen\'t have any card"},
+                                        status=status.HTTP_404_NOT_FOUND)
             else:
                 ref = request.META.get("HTTP_REFERER").split("/")[2]
 
