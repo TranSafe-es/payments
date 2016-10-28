@@ -436,7 +436,7 @@ class MyCardsView(views.APIView):
             del request.session[key]
 
         if serializer.is_valid():
-            if "json" in request.content_type:
+            if "json" in request.META.get("HTTP_ACCEPT"):
                 cards = []
                 user_id = serializer.validated_data["user_id"]
                 for c in Card.objects.all():
