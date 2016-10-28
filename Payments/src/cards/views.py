@@ -452,9 +452,8 @@ class MyCardsView(views.APIView):
                         return Response({"message": "The user doen\'t have any card"},
                                         status=status.HTTP_404_NOT_FOUND)
             else:
-                ref = request.META.get("HTTP_REFERER").split("/")[2]
 
-                if request.META.get("HTTP_HOST") != ref:
+                if request.META.get("HTTP_HOST") != request.META.get("REMOTE_ADDR"):
                     request.session["close"] = request.META.get("HTTP_REFERER")
 
                 template = "mycards.html"
