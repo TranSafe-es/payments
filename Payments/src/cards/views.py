@@ -1,13 +1,16 @@
+import datetime
+import socket
+import uuid
 from django.shortcuts import render, redirect
 from .models import Card
-from .serializers import CardSerializer, UpdateCardSerializer, DeleteCardSerializer, UserIDSerializer, ListCardsSerializer
+from .serializers import CardSerializer, DeleteCardSerializer, UpdateCardSerializer, UserIDSerializer, ListCardsSerializer
 from rest_framework import viewsets, status, mixins, views
-import uuid
-import datetime
+
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
 from django.views.decorators.clickjacking import xframe_options_exempt
+
 
 
 class InitAddView(views.APIView):
@@ -26,7 +29,8 @@ class InitAddView(views.APIView):
 
             cache.set(cache_id, data)
             for key in request.session.keys():
-                del request.session[key]
+                if key != "close":
+                    del request.session[key]
             return redirect('/api/v1/cards/add_card/' + cache_id + "/")
         else:
             return Response({'status': 'Bad Request',
@@ -50,7 +54,8 @@ class InitUpdateView(views.APIView):
 
             cache.set(cache_id, data)
             for key in request.session.keys():
-                del request.session[key]
+                if key != "close":
+                    del request.session[key]
             return redirect('/api/v1/cards/edit_card/' + cache_id + "/")
         else:
             return Response({'status': 'Bad Request',
@@ -74,7 +79,8 @@ class InitDeleteView(views.APIView):
 
             cache.set(cache_id, data)
             for key in request.session.keys():
-                del request.session[key]
+                if key != "close":
+                    del request.session[key]
 
             return redirect('/api/v1/cards/delete_card/' + cache_id + "/")
         else:
@@ -93,11 +99,12 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
         try:
             if request.session["payments"] is True:
                 for key in request.session.keys():
-                    if key != "cancel" and key != "payments":
+                    if key != "cancel" and key != "payments" and key != "close":
                         del request.session[key]
         except KeyError:
             for key in request.session.keys():
-                del request.session[key]
+                if key != "close":
+                    del request.session[key]
             request.session["cancel"] = cache.get(kwargs["cache_id"])["url"]
 
         if Card.objects.filter(user_id=cache.get(kwargs["cache_id"])["user_id"]).count() == 0:
@@ -114,11 +121,12 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
             try:
                 if request.session["payments"] is True:
                     for key in request.session.keys():
-                        if key != "cancel" and key != "payments":
+                        if key != "cancel" and key != "payments" and key != "close":
                             del request.session[key]
             except KeyError:
                 for key in request.session.keys():
-                    del request.session[key]
+                    if key != "close":
+                        del request.session[key]
 
             if cache.get(request.data["cache_id"]) is not None:
                 try:
@@ -225,7 +233,8 @@ class UpdateCardView(views.APIView):
     def get(request, *args, **kwargs):
         template = "update_Card_choose.html"
         for key in request.session.keys():
-            del request.session[key]
+            if key != "close":
+                del request.session[key]
 
         user_id = cache.get(kwargs["cache_id"])["user_id"]
 
@@ -253,7 +262,8 @@ class UpdateCard(views.APIView):
         if request.POST["choose"] == "True":
             template = "update_Card.html"
             for key in request.session.keys():
-                del request.session[key]
+                if key != "close":
+                    del request.session[key]
 
             c = Card.objects.get(card_id=kwargs["card_id"])
 
@@ -273,7 +283,7 @@ class UpdateCard(views.APIView):
                 if f != "cache_id":
                     serializer.fields[f].required = False
             for key in request.session.keys():
-                if key != "cancel":
+                if key != "cancel" and key != "close":
                     del request.session[key]
 
             if cache.get(request.data["cache_id"]) is not None:
@@ -344,7 +354,7 @@ class UpdateCard(views.APIView):
                                 pass
                             c.save()
                             for key in request.session.keys():
-                                if key != "cancel":
+                                if key != "cancel" and key != "close":
                                     del request.session[key]
 
                             return redirect(request.session["cancel"])
@@ -367,7 +377,7 @@ class DeleteCardView(views.APIView):
     def get(request, *args, **kwargs):
         template = "delete_Card.html"
         for key in request.session.keys():
-            if key != "delete_error":
+            if key != "delete_error" and key != "close":
                 del request.session[key]
 
         user_id = cache.get(kwargs["cache_id"])["user_id"]
@@ -415,7 +425,7 @@ class DeleteCard(views.APIView):
                                     break
                     c.delete()
                     for key in request.session.keys():
-                        if key != "cancel":
+                        if key != "cancel" and key != "close":
                             del request.session[key]
 
                     return redirect(request.session["cancel"])
@@ -452,8 +462,9 @@ class MyCardsView(views.APIView):
                         return Response({"message": "The user doen\'t have any card"},
                                         status=status.HTTP_404_NOT_FOUND)
             else:
+                ref = request.META.get("HTTP_REFERER").split("/")[2]
 
-                if request.META.get("HTTP_HOST") != request.META.get("REMOTE_ADDR"):
+                if socket.gethostname() != ref:
                     request.session["close"] = request.META.get("HTTP_REFERER")
 
                 template = "mycards.html"
