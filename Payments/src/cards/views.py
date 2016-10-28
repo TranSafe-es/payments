@@ -435,11 +435,6 @@ class MyCardsView(views.APIView):
         for key in request.session.keys():
             del request.session[key]
 
-        ref = request.META.get("HTTP_REFERER").split("/")[2]
-
-        if request.META.get("HTTP_HOST") != ref:
-            request.session["close"] = request.META.get("HTTP_REFERER")
-
         if serializer.is_valid():
             if "json" in request.content_type:
                 cards = []
@@ -453,6 +448,11 @@ class MyCardsView(views.APIView):
                 if serializer1.is_valid():
                     return Response(serializer1.data, status=status.HTTP_200_OK)
             else:
+                ref = request.META.get("HTTP_REFERER").split("/")[2]
+
+                if request.META.get("HTTP_HOST") != ref:
+                    request.session["close"] = request.META.get("HTTP_REFERER")
+
                 template = "mycards.html"
 
                 cards = []
