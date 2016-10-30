@@ -122,7 +122,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                         c1.save()
                         c2 = Card.objects.get(user_id=user_id2, defined=True)
                         Payment.objects.create(user_id1=user_id, user_id2=user_id2, card_1=c1, card_2=c2,
-                                               amount=float(amount), description=description,
+                                               amount=Decimal(amount), description=description,
                                                transaction_id=transaction_id)
 
                         return redirect(confirm)
