@@ -25,7 +25,8 @@ class InitPaymentView(views.APIView):
                     "user_id2": serializer.validated_data["user_id2"],
                     "transaction_id": serializer.validated_data["transaction_id"],
                     "amount": serializer.validated_data["amount"],
-                    "description": serializer.validated_data["description"], "url": request.META.get("HTTP_REFERER")}
+                    "description": serializer.validated_data["description"], "url": request.META.get("HTTP_REFERER"),
+                    "callback": serializer.validated_data["callback"]}
             #  data = {"user_id": kwargs["user_id1"], "user_id2": kwargs["user_id2"],
             #       "transaction_id": kwargs["transaction_id"], "amount": kwargs["amount"],
             #       "description": kwargs["description"], "url": "http://www.google.pt"}
@@ -93,6 +94,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                 user_id = c["user_id"]
                 user_id2 = c["user_id2"]
                 amount = c["amount"]
+                confirm = c["callback"]
                 transaction_id = c["transaction_id"]
                 description = c["description"]
                 url = c["url"]
@@ -122,7 +124,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                         Payment.objects.create(user_id1=user_id, user_id2=user_id2, card_1=c1, card_2=c2, amount=amount,
                                                description=description, transaction_id=transaction_id)
 
-                        return redirect(request.session["cancel"])
+                        return redirect(confirm)
                 else:
                     request.session["error_confirm"] = "This transaction already exists"
                     template = "payment.html"
