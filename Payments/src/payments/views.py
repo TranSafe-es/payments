@@ -91,7 +91,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
         if serializer.is_valid():
             if cache.get(serializer.validated_data["cache_id"]) is not None:
                 c = cache.get(serializer.validated_data["cache_id"])
-                user_id = c["user_id"]
+                user_id = c["user_id1"]
                 user_id2 = c["user_id2"]
                 amount = c["amount"]
                 confirm = c["callback"]
