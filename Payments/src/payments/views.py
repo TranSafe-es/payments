@@ -99,7 +99,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                 description = c["description"]
                 url = c["url"]
                 request.session["cancel"] = url
-                request.session["amount"] = amount
+                request.session["amount"] = str(c["amount"])
                 request.session["description"] = description
                 cards = []
                 for c in Card.objects.all():
@@ -118,11 +118,11 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
                             request.session["error_confirm"] = "This card doesn\'t have money to confirm the payment"
                             template = "payment.html"
                             return render(request, template)
-                        c1.total = c1.total - Decimal(amount)
+                        c1.total = c1.total - Decimal(c["amount"])
                         c1.save()
                         c2 = Card.objects.get(user_id=user_id2, defined=True)
                         Payment.objects.create(user_id1=user_id, user_id2=user_id2, card_1=c1, card_2=c2,
-                                               amount=Decimal(amount), description=description,
+                                               amount=c["amount"], description=description,
                                                transaction_id=transaction_id)
 
                         return redirect(confirm)
