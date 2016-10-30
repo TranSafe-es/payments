@@ -144,8 +144,9 @@ class CompletePaymentView(views.APIView):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
 
         if serializer.is_valid():
-            if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"], state="Pending").count() == 1:
-                p = Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"])
+            if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"],
+                                      state="Pending").count() == 1:
+                p = Payment.objects.get(transaction_id=serializer.validated_data["transaction_id"])
                 c = p.card_2
                 c.total = c.total + p.amount
                 p.state("Completed")
