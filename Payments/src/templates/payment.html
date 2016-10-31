@@ -90,7 +90,7 @@
             <form id="form2" method="post">
                 <input type="hidden" id="cache_id2" name="cache_id" class="span2">
                 <input type="hidden" id="card_id_selected" name="card_id" class="span2">
-                <input type="button" id="cancel" onclick="location.href= '{{ request.session.cancel }}'"
+                <input type="button" id="cancel" onclick="window.close()"
                        class="btn btn-danger" value="Cancel">
                 <input type="submit" id="button" class="btn btn-success" value="Confirm Payment"
                        onclick="return confirm('Are you sure that you want to confirm this payment?')">
