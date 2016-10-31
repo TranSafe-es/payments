@@ -40,7 +40,6 @@ class InitPaymentView(views.APIView):
                 return redirect('/api/v1/payments/confirm_payment/' + cache_id + "/")
 
             else:
-                request.session["error_init"] = True
                 return Response({'status': 'Without Cards',
                                  'message': 'The user doesn\'t have an associated card to receive the money'},
                                 status=status.HTTP_401_UNAUTHORIZED)
