@@ -40,6 +40,7 @@ class InitPaymentView(views.APIView):
                 return redirect('/api/v1/payments/confirm_payment/' + cache_id + "/")
 
             else:
+                request.session["error_init"] = True
                 return Response({'status': 'Without Cards',
                                  'message': 'The user doesn\'t have an associated card to receive the money'},
                                 status=status.HTTP_401_UNAUTHORIZED)
@@ -149,7 +150,7 @@ class CompletePaymentView(views.APIView):
                 p = Payment.objects.get(transaction_id=serializer.validated_data["transaction_id"])
                 c = p.card_2
                 c.total = c.total + p.amount
-                p.state("Completed")
+                p.state = "Completed"
                 p.save()
                 c.save()
 
