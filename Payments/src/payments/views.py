@@ -21,7 +21,7 @@ class InitPaymentView(views.APIView):
 
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
-            data = {"user_id1": serializer.validated_data["user_id1"],
+            data = {"user_id": serializer.validated_data["user_id1"],
                     "user_id2": serializer.validated_data["user_id2"],
                     "transaction_id": serializer.validated_data["transaction_id"],
                     "amount": serializer.validated_data["amount"],
@@ -59,7 +59,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
             del request.session[key]
         if cache.get(kwargs["cache_id"]) is not None:
             c = cache.get(kwargs["cache_id"])
-            user_id = c["user_id1"]
+            user_id = c["user_id"]
             request.session["description"] = c["description"]
             request.session["amount"] = str(c["amount"])
             request.session["cancel"] = c["url"]
@@ -91,7 +91,7 @@ class CreatePaymentView(mixins.RetrieveModelMixin, mixins.CreateModelMixin, view
         if serializer.is_valid():
             if cache.get(serializer.validated_data["cache_id"]) is not None:
                 c = cache.get(serializer.validated_data["cache_id"])
-                user_id = c["user_id1"]
+                user_id = c["user_id"]
                 user_id2 = c["user_id2"]
                 amount = c["amount"]
                 confirm = c["callback"]
