@@ -21,6 +21,11 @@ paths:
       description: |
         This payments endpoint method is used to create a new payment to the user specified by the uuid.
       parameters:
+        - name: token_ID
+          description: The application token ID
+          required: true
+          type: string
+          in: header
         - name: user_id1
           description: The user_id1 uuid
           required: true
@@ -46,6 +51,11 @@ paths:
           required: true
           type: string
           in: formData
+        - name: callback
+          description: URL to redirect
+          required: true
+          type: string
+          in: formData
       tags:
         - Payments
       responses:
@@ -60,6 +70,11 @@ paths:
       description: |
         This payments endpoint method completes the payment
       parameters:
+        - name: token_ID
+          description: The application token ID
+          required: true
+          type: string
+          in: header
         - name: transaction_id
           description: The transaction id
           required: true
@@ -81,6 +96,11 @@ paths:
       description: |
         This payments endpoint method refunds the payment
       parameters:
+        - name: token_ID
+          description: The application token ID
+          required: true
+          type: string
+          in: header
         - name: transaction_id
           description: The transaction id
           required: true
@@ -93,64 +113,6 @@ paths:
           description: The payment has been refunded succesfully
         401:
           description: This transaction can't be refunded 
-        default:
-          description: Unexpected error
-          
-  
-  /cards/create/:
-    post:
-      summary: Get URL to add a new card
-      description: |
-        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can associate a credit card
-      parameters:
-        - name: user_id
-          description: The user uuid
-          required: true
-          type: string
-          in: formData
-      tags:
-        - Cards
-      responses:
-        302:
-          description: The card has been associated successfully.
-        default:
-          description: Unexpected error
-          
-  /cards/update/:
-    post:
-      summary: Get URL to update a card
-      description: |
-        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can update a credit card
-      parameters:
-        - name: user_id
-          description: The user uuid
-          required: true
-          type: string
-          in: formData
-      tags:
-        - Cards
-      responses:
-        302:
-          description: The card has been associated successfully.
-        default:
-          description: Unexpected error
-          
-  /cards/delete/:
-    post:
-      summary: Get URL to delete a card
-      description: |
-        This cards endpoint method returns an URL that an user defined by a uuid has associated to him can delete a credit card
-      parameters:
-        - name: user_id
-          description: The user uuid
-          required: true
-          type: string
-          in: formData
-      tags:
-        - Cards
-      responses:
-        302:
-          description: Redirect URL.
         default:
           description: Unexpected error
   

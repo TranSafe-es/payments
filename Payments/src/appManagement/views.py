@@ -20,3 +20,10 @@ class CreateAppView(views.APIView):
 
         return Response({'token_id': a.token_id},
                         status=status.HTTP_200_OK)
+
+class ShowAppTemplate(views.APIView):
+
+    @staticmethod
+    @never_cache
+    def get(request, *args, **kwargs):
+        return render(request, "index.html")

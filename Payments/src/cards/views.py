@@ -5,18 +5,14 @@ from django.shortcuts import render, redirect
 from .models import Card
 from .serializers import CardSerializer, DeleteCardSerializer, UpdateCardSerializer, UserIDSerializer, ListCardsSerializer
 from rest_framework import viewsets, status, mixins, views
-
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
-from django.views.decorators.clickjacking import xframe_options_exempt
-
 
 
 class InitAddView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -41,7 +37,6 @@ class InitAddView(views.APIView):
 class InitUpdateView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -65,7 +60,6 @@ class InitUpdateView(views.APIView):
 class InitDeleteView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     def post(request, *args, **kwargs):
 
         cache_id = str(uuid.uuid4().get_hex().upper()[0:6])
@@ -89,7 +83,6 @@ class InitDeleteView(views.APIView):
 
 class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet, views.APIView):
 
-    @xframe_options_exempt
     @never_cache
     def retrieve(self, request, *args, **kwargs):
 
@@ -110,7 +103,6 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
             request.session["defined"] = False
         return render(request, template)
 
-    @xframe_options_exempt
     @never_cache
     def create(self, request, **kwargs):
         if "payments" not in request.data:
@@ -224,7 +216,6 @@ class AddCardView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.G
 class UpdateCardView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         template = "update_Card_choose.html"
@@ -252,7 +243,6 @@ class UpdateCardView(views.APIView):
 class UpdateCard(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     def post(request, *args, **kwargs):
         if request.POST["choose"] == "True":
             template = "update_Card.html"
@@ -366,7 +356,6 @@ class UpdateCard(views.APIView):
 class DeleteCardView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         template = "delete_Card.html"
@@ -393,7 +382,6 @@ class DeleteCardView(views.APIView):
 class DeleteCard(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     def post(request, *args, **kwargs):
         serializer = DeleteCardSerializer(data=request.data)
         if cache.get(request.data["cache_id"]) is not None:
@@ -432,7 +420,6 @@ class DeleteCard(views.APIView):
 class MyCardsView(views.APIView):
 
     @staticmethod
-    @xframe_options_exempt
     @never_cache
     def get(request, *args, **kwargs):
         serializer = UserIDSerializer(data=kwargs)
@@ -476,6 +463,7 @@ class MyCardsView(views.APIView):
                     request.session["error"] = "This user doesn't have any cards"
 
                 return render(request, template)
+
 
         return Response({'status': 'Bad Request',
                          'message': 'Unexpected error'},
