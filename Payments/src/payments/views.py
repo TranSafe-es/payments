@@ -20,8 +20,8 @@ class InitPaymentView(views.APIView):
 
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
-            if request.META.get("token_ID") is not None:
-                if App.objects.filter(token_id=request.META.get("token_ID")).count() > 0:
+            if request.META.get("HTTP_ACCESS_TOKEN") is not None:
+                if App.objects.filter(token_id=request.META.get("HTTP_ACCESS_TOKEN")).count() > 0:
                     data = {"user_id": serializer.validated_data["user_id1"],
                             "user_id2": serializer.validated_data["user_id2"],
                             "transaction_id": serializer.validated_data["transaction_id"],
@@ -48,7 +48,7 @@ class InitPaymentView(views.APIView):
                     return Response({'status': 'App Not Found',
                                      'message': 'The token ID is not valid'},
                                     status=status.HTTP_404_NOT_FOUND)
-                                    
+
         return Response({'status': 'Bad Request',
                          'message': 'Unexpected error'},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -146,8 +146,8 @@ class CompletePaymentView(views.APIView):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
 
         if serializer.is_valid():
-            if request.META.get("token_ID") is not None:
-                if App.objects.filter(token_id=request.META.get("token_ID")).count() > 0:
+            if request.META.get("HTTP_ACCESS_TOKEN") is not None:
+                if App.objects.filter(token_id=request.META.get("HTTP_ACCESS_TOKEN")).count() > 0:
                     if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"],
                                               state="Pending").count() == 1:
                         p = Payment.objects.get(transaction_id=serializer.validated_data["transaction_id"])
@@ -181,8 +181,8 @@ class RefundPaymentView(views.APIView):
         serializer = CompleteRefundPaymentSerializer(data=request.data)
 
         if serializer.is_valid():
-            if request.META.get("token_ID") is not None:
-                if App.objects.filter(token_id=request.META.get("token_ID")).count() > 0:
+            if request.META.get("HTTP_ACCESS_TOKEN") is not None:
+                if App.objects.filter(token_id=request.META.get("HTTP_ACCESS_TOKEN")).count() > 0:
                     if Payment.objects.filter(transaction_id=serializer.validated_data["transaction_id"], state="Pending").count() == 1:
                         p = Payment.objects.get(transaction_id=serializer.validated_data["transaction_id"])
                         c = p.card_1
